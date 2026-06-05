@@ -1,0 +1,1365 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Task Tracker 0.04</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;600&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #EEF4F0;
+    --surface: #F7FBFA;
+    --surface2: #DDE9E4;
+    --border: #A8C4BA;
+    --border-light: #C8DDD8;
+    --text: #1A2E28;
+    --text-muted: #4A7060;
+    --text-faint: #8AB0A4;
+    --accent: #2A7A5E;
+    --accent-light: #D4EDE5;
+    --accent2: #3B6B8A;
+    --accent2-light: #D4E5EF;
+    --amber: #2E7D9A;
+    --amber-light: #D6EBF5;
+    --danger: #1E5F74;
+    --danger-light: #D0E8F0;
+    --blue: #1A5276;
+    --blue-light: #C8DFF0;
+    --radius: 10px;
+    --radius-lg: 16px;
+    --shadow: 0 2px 12px rgba(42,34,24,0.07);
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    font-size: 14px;
+    line-height: 1.6;
+  }
+
+  /* TOPBAR */
+  .topbar {
+    background: var(--text);
+    color: #F5F0E8;
+    padding: 0 2rem;
+    height: 54px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+  .topbar-brand {
+    font-family: 'Playfair Display', serif;
+    font-size: 18px;
+    font-weight: 500;
+    letter-spacing: 0.02em;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .topbar-brand svg { opacity: 0.7; }
+  .topbar-date {
+    font-size: 12px;
+    font-weight: 300;
+    opacity: 0.6;
+    letter-spacing: 0.04em;
+  }
+  .topbar-stats {
+    display: flex;
+    gap: 20px;
+  }
+  .topbar-stat {
+    font-size: 11px;
+    opacity: 0.55;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+  }
+  .topbar-stat strong { opacity: 1; font-weight: 500; font-size: 13px; }
+
+  /* FOCUS BANNER */
+  .focus-banner {
+    background: var(--accent);
+    padding: 10px 2rem;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .focus-banner label {
+    font-size: 11px;
+    font-weight: 500;
+    color: rgba(255,255,255,0.6);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    white-space: nowrap;
+  }
+  .focus-banner input {
+    background: transparent;
+    border: none;
+    border-bottom: 1px solid rgba(255,255,255,0.25);
+    color: #fff;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 14px;
+    font-weight: 400;
+    width: 100%;
+    padding: 2px 0;
+    outline: none;
+  }
+  .focus-banner input::placeholder { color: rgba(255,255,255,0.4); }
+
+  /* LAYOUT */
+  .main { padding: 2rem; max-width: 1280px; margin: 0 auto; }
+
+  .grid-top { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-bottom: 1.5rem; }
+  .grid-mid { display: grid; grid-template-columns: 1fr; gap: 1.5rem; margin-bottom: 1.5rem; }
+  .grid-recur { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1rem; margin-bottom: 1.5rem; }
+  .grid-bot { display: grid; grid-template-columns: 2fr 1fr; gap: 1.5rem; margin-bottom: 1.5rem; }
+
+  /* CARD */
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border-light);
+    border-radius: var(--radius-lg);
+    padding: 1.25rem 1.5rem;
+    box-shadow: var(--shadow);
+  }
+  .card-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 1rem;
+    padding-bottom: 0.75rem;
+    border-bottom: 1px solid var(--border-light);
+  }
+  .card-title {
+    font-family: 'Playfair Display', serif;
+    font-size: 16px;
+    font-weight: 500;
+    color: var(--text);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .card-title .icon {
+    width: 26px; height: 26px;
+    background: var(--accent-light);
+    border-radius: 6px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 13px;
+  }
+  .card-count {
+    font-size: 11px;
+    font-weight: 500;
+    color: var(--text-faint);
+    background: var(--surface2);
+    padding: 2px 9px;
+    border-radius: 20px;
+  }
+
+  /* SECTION LABEL */
+  .section-label {
+    font-size: 10px;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--text-faint);
+    margin-bottom: 8px;
+  }
+
+  /* INPUT ROW */
+  .add-row {
+    display: flex;
+    gap: 6px;
+    margin-bottom: 12px;
+  }
+  .add-row input, .add-row select {
+    flex: 1;
+    height: 34px;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 13px;
+    padding: 0 10px;
+    outline: none;
+    transition: border-color 0.15s;
+  }
+  .add-row input:focus, .add-row select:focus { border-color: var(--accent); }
+  .add-row input::placeholder { color: var(--text-faint); }
+  .btn-add {
+    height: 34px;
+    padding: 0 14px;
+    background: var(--accent);
+    color: #fff;
+    border: none;
+    border-radius: var(--radius);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background 0.15s, transform 0.1s;
+    white-space: nowrap;
+  }
+  .btn-add:hover { background: #1E6B4F; }
+  .btn-add:active { transform: scale(0.97); }
+
+  /* TASK ITEMS */
+  .task-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 7px 0;
+    border-bottom: 1px solid var(--border-light);
+    animation: fadeIn 0.2s ease;
+  }
+  .task-item:last-child { border-bottom: none; }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: translateY(0); } }
+
+  .task-item input[type=checkbox] {
+    width: 16px; height: 16px;
+    accent-color: var(--accent);
+    cursor: pointer;
+    flex-shrink: 0;
+  }
+  .task-text {
+    flex: 1;
+    font-size: 13px;
+    color: var(--text);
+  }
+  .task-text.done {
+    text-decoration: line-through;
+    color: var(--text-faint);
+  }
+  .task-meta {
+    font-size: 11px;
+    color: var(--text-faint);
+    white-space: nowrap;
+  }
+  .btn-del {
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: var(--text-faint);
+    font-size: 16px;
+    padding: 0 2px;
+    line-height: 1;
+    transition: color 0.15s;
+    flex-shrink: 0;
+  }
+  .btn-del:hover { color: var(--danger); }
+  .empty-state {
+    font-size: 13px;
+    color: var(--text-faint);
+    padding: 10px 0;
+    text-align: center;
+    font-style: italic;
+  }
+
+  /* PRIORITY BADGE */
+  .priority { font-size: 10px; font-weight: 500; padding: 1px 7px; border-radius: 20px; white-space: nowrap; }
+  .p-high { background: var(--danger-light); color: var(--danger); }
+  .p-med  { background: var(--amber-light); color: var(--amber); }
+  .p-low  { background: var(--accent2-light); color: var(--accent2); }
+
+  /* CALENDAR ITEMS */
+  .cal-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 8px 0;
+    border-bottom: 1px solid var(--border-light);
+    animation: fadeIn 0.2s ease;
+  }
+  .cal-item:last-child { border-bottom: none; }
+  .cal-date-block {
+    background: var(--accent-light);
+    border-radius: 8px;
+    padding: 4px 8px;
+    text-align: center;
+    min-width: 44px;
+    flex-shrink: 0;
+  }
+  .cal-date-block .month { font-size: 9px; font-weight: 500; text-transform: uppercase; letter-spacing: 0.08em; color: var(--accent); }
+  .cal-date-block .day   { font-size: 18px; font-weight: 600; font-family: 'Playfair Display', serif; color: var(--text); line-height: 1.1; }
+  .cal-item-body { flex: 1; }
+  .cal-item-title { font-size: 13px; font-weight: 500; color: var(--text); }
+  .cal-item-sub   { font-size: 11px; color: var(--text-muted); margin-top: 1px; }
+  .cal-badge { font-size: 10px; font-weight: 500; padding: 1px 7px; border-radius: 20px; }
+  .cb-today   { background: var(--danger-light); color: var(--danger); }
+  .cb-week    { background: var(--accent2-light); color: var(--accent2); }
+  .cb-month   { background: var(--amber-light); color: var(--amber); }
+  .cb-future  { background: var(--surface2); color: var(--text-muted); }
+
+  /* EVENTS */
+  .event-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 7px 10px;
+    border-radius: 8px;
+    background: var(--surface2);
+    margin-bottom: 6px;
+    animation: fadeIn 0.2s ease;
+  }
+  .event-cat-dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+  .event-text { flex: 1; font-size: 13px; color: var(--text); }
+  .event-date { font-size: 11px; color: var(--text-muted); white-space: nowrap; }
+  .event-cat-badge {
+    font-size: 10px;
+    font-weight: 500;
+    padding: 1px 7px;
+    border-radius: 20px;
+    white-space: nowrap;
+  }
+
+  /* RECUR */
+  .recur-card {
+    background: var(--surface);
+    border: 1px solid var(--border-light);
+    border-radius: var(--radius-lg);
+    padding: 1rem 1.25rem;
+    box-shadow: var(--shadow);
+  }
+  .recur-header {
+    font-family: 'Playfair Display', serif;
+    font-size: 14px;
+    font-weight: 500;
+    margin-bottom: 10px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid var(--border-light);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .recur-freq-label {
+    font-size: 10px;
+    font-weight: 500;
+    padding: 2px 8px;
+    border-radius: 20px;
+  }
+  .rf-daily    { background: var(--blue-light); color: var(--blue); }
+  .rf-weekly   { background: var(--accent2-light); color: var(--accent2); }
+  .rf-biweekly { background: var(--amber-light); color: var(--amber); }
+  .rf-monthly  { background: var(--accent-light); color: var(--accent); }
+
+  .recur-add {
+    display: flex;
+    gap: 5px;
+    margin-bottom: 8px;
+  }
+  .recur-add input {
+    flex: 1;
+    height: 30px;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 12px;
+    padding: 0 8px;
+    outline: none;
+  }
+  .recur-add input:focus { border-color: var(--accent); }
+  .recur-add input::placeholder { color: var(--text-faint); }
+  .btn-add-sm {
+    height: 30px; padding: 0 10px;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    font-size: 16px;
+    cursor: pointer;
+    color: var(--text-muted);
+    transition: background 0.15s;
+  }
+  .btn-add-sm:hover { background: var(--border); }
+
+  .recur-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 5px 0;
+    border-bottom: 1px solid var(--border-light);
+  }
+  .recur-item:last-child { border-bottom: none; }
+  .recur-item input[type=checkbox] { width: 14px; height: 14px; accent-color: var(--accent); cursor: pointer; flex-shrink: 0; }
+  .recur-item-text { flex: 1; font-size: 12px; color: var(--text); }
+  .recur-item-text.done { text-decoration: line-through; color: var(--text-faint); }
+  .btn-del-sm { background: none; border: none; cursor: pointer; color: var(--text-faint); font-size: 14px; line-height: 1; transition: color 0.15s; }
+  .btn-del-sm:hover { color: var(--danger); }
+
+  /* BRAIN DUMP */
+  .brain-textarea {
+    width: 100%;
+    min-height: 90px;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 13px;
+    padding: 10px 12px;
+    resize: vertical;
+    outline: none;
+    line-height: 1.6;
+    transition: border-color 0.15s;
+  }
+  .brain-textarea:focus { border-color: var(--accent); }
+  .brain-textarea::placeholder { color: var(--text-faint); }
+  .brain-controls { display: flex; gap: 8px; margin-top: 8px; align-items: center; }
+  .brain-controls select {
+    flex: 1;
+    height: 34px;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 12px;
+    padding: 0 10px;
+    outline: none;
+  }
+
+  .dump-item {
+    background: var(--surface2);
+    border-radius: 8px;
+    padding: 8px 12px;
+    margin-bottom: 6px;
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    animation: fadeIn 0.2s ease;
+    border-left: 3px solid var(--border);
+  }
+  .dump-item.cat-idea    { border-left-color: var(--amber); }
+  .dump-item.cat-todo    { border-left-color: var(--accent2); }
+  .dump-item.cat-ranch   { border-left-color: var(--accent); }
+  .dump-item.cat-meeting { border-left-color: var(--blue); }
+  .dump-item.cat-note    { border-left-color: var(--text-faint); }
+  .dump-item.cat-question { border-left-color: var(--danger); }
+  .dump-item-text { flex: 1; font-size: 13px; color: var(--text); line-height: 1.5; }
+  .dump-item-cat {
+    font-size: 10px;
+    font-weight: 500;
+    padding: 2px 8px;
+    border-radius: 20px;
+    white-space: nowrap;
+    background: var(--surface);
+    color: var(--text-muted);
+  }
+  .dump-item select {
+    background: var(--surface);
+    border: 1px solid var(--border-light);
+    border-radius: 6px;
+    font-size: 11px;
+    color: var(--text-muted);
+    padding: 2px 4px;
+    cursor: pointer;
+    font-family: 'DM Sans', sans-serif;
+  }
+
+  /* STATS SIDEBAR */
+  .stat-block {
+    background: var(--surface);
+    border: 1px solid var(--border-light);
+    border-radius: var(--radius-lg);
+    padding: 1.25rem 1.5rem;
+    margin-bottom: 1rem;
+    box-shadow: var(--shadow);
+  }
+  .stat-block:last-child { margin-bottom: 0; }
+  .stat-num {
+    font-family: 'Playfair Display', serif;
+    font-size: 36px;
+    font-weight: 600;
+    color: var(--text);
+    line-height: 1;
+    margin-bottom: 4px;
+  }
+  .stat-label { font-size: 12px; color: var(--text-muted); }
+  .stat-bar { height: 3px; background: var(--border-light); border-radius: 2px; margin-top: 10px; }
+  .stat-bar-fill { height: 3px; background: var(--accent); border-radius: 2px; transition: width 0.4s ease; }
+
+  /* QUICK NOTE */
+  .quick-note {
+    background: var(--amber-light);
+    border: 1px solid #E8C97A;
+    border-radius: var(--radius-lg);
+    padding: 1.25rem 1.5rem;
+    box-shadow: var(--shadow);
+  }
+  .quick-note .card-title .icon { background: rgba(196,123,43,0.15); }
+  .pinned-note {
+    font-size: 13px;
+    color: var(--text);
+    line-height: 1.7;
+    padding: 6px 0;
+    border-bottom: 1px solid rgba(196,123,43,0.2);
+    display: flex;
+    gap: 8px;
+    align-items: flex-start;
+  }
+  .pinned-note:last-child { border-bottom: none; }
+  .pin-icon { font-size: 12px; flex-shrink: 0; margin-top: 2px; }
+  .note-textarea {
+    width: 100%;
+    background: rgba(255,255,255,0.5);
+    border: 1px solid rgba(196,123,43,0.3);
+    border-radius: 8px;
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 13px;
+    padding: 8px 10px;
+    min-height: 60px;
+    resize: none;
+    outline: none;
+  }
+  .note-textarea::placeholder { color: var(--amber); opacity: 0.5; }
+
+  /* WEATHER STRIP */
+  .weather-strip {
+    background: var(--surface);
+    border: 1px solid var(--border-light);
+    border-radius: var(--radius-lg);
+    padding: 1rem 1.5rem;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+    box-shadow: var(--shadow);
+  }
+  .weather-icon { font-size: 28px; }
+  .weather-main { flex: 1; }
+  .weather-temp { font-family: 'Playfair Display', serif; font-size: 22px; font-weight: 500; }
+  .weather-desc { font-size: 12px; color: var(--text-muted); }
+  .weather-note { font-size: 11px; color: var(--text-faint); border-left: 2px solid var(--border); padding-left: 12px; }
+
+  /* RESPONSIVE */
+  @media (max-width: 900px) {
+    .grid-top { grid-template-columns: 1fr; }
+    .grid-recur { grid-template-columns: repeat(2, 1fr); }
+    .grid-bot { grid-template-columns: 1fr; }
+    .topbar-stats { display: none; }
+  }
+  @media (max-width: 600px) {
+    .main { padding: 1rem; }
+    .grid-recur { grid-template-columns: 1fr 1fr; }
+    .topbar { padding: 0 1rem; }
+    .focus-banner { padding: 10px 1rem; }
+  }
+
+  /* PROJECT ITEMS */
+  .project-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    padding: 9px 10px;
+    border-radius: 8px;
+    background: var(--surface2);
+    margin-bottom: 6px;
+    animation: fadeIn 0.2s ease;
+  }
+  .project-status {
+    font-size: 10px;
+    font-weight: 500;
+    padding: 2px 8px;
+    border-radius: 20px;
+    white-space: nowrap;
+    flex-shrink: 0;
+    margin-top: 1px;
+  }
+  .ps-active   { background: var(--accent2-light); color: var(--accent2); }
+  .ps-stalled  { background: var(--danger-light); color: var(--danger); }
+  .ps-waiting  { background: var(--amber-light); color: var(--amber); }
+  .ps-done     { background: var(--surface2); color: var(--text-faint); }
+  .project-body { flex: 1; min-width: 0; }
+  .project-name { font-size: 13px; font-weight: 500; color: var(--text); }
+  .project-name.done { text-decoration: line-through; color: var(--text-faint); }
+  .project-notes { font-size: 11px; color: var(--text-muted); margin-top: 2px; line-height: 1.4; }
+
+  /* BUSY WORK ITEMS */
+  .busy-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 6px 0;
+    border-bottom: 1px solid var(--border-light);
+    animation: fadeIn 0.2s ease;
+  }
+  .busy-item:last-child { border-bottom: none; }
+  .busy-item input[type=checkbox] { width: 15px; height: 15px; accent-color: var(--accent2); cursor: pointer; flex-shrink: 0; }
+  .busy-text { flex: 1; font-size: 13px; color: var(--text); }
+  .busy-text.done { text-decoration: line-through; color: var(--text-faint); }
+
+  /* SCROLLBAR */
+  ::-webkit-scrollbar { width: 6px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+</style>
+</head>
+<body>
+
+<!-- TOP BAR -->
+<div class="topbar">
+  <div class="topbar-brand">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9,22 9,12 15,12 15,22"/></svg>
+    Task Tracker 0.04
+  </div>
+  <div class="topbar-date" id="topbar-date"></div>
+  <div class="topbar-stats">
+    <div class="topbar-stat">Tasks done: <strong id="ts-done">0</strong></div>
+    <div class="topbar-stat">Ranch events: <strong id="ts-events">0</strong></div>
+    <div class="topbar-stat">Dump items: <strong id="ts-dump">0</strong></div>
+  </div>
+</div>
+
+<!-- FOCUS BANNER -->
+<div class="focus-banner">
+  <label>★ Today's focus</label>
+  <input type="text" id="focus-input" placeholder="What is the one thing that matters most today?" />
+</div>
+
+<div class="main">
+
+  <!-- TOP ROW: Todo + Calendar -->
+  <div class="grid-top">
+
+    <!-- TODO LIST -->
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title">
+          <div class="icon">✓</div>
+          To-do list
+        </div>
+        <span class="card-count" id="todo-count">0 items</span>
+      </div>
+      <div class="add-row">
+        <input type="text" id="todo-input" placeholder="Add a task…" />
+        <select id="todo-priority" style="flex:0 0 auto;width:90px">
+          <option value="high">High</option>
+          <option value="med">Medium</option>
+          <option value="low">Low</option>
+        </select>
+        <button class="btn-add" onclick="addTodo()">+ Add</button>
+      </div>
+      <div id="todo-list"><p class="empty-state">No tasks yet — add one above</p></div>
+    </div>
+
+    <!-- CALENDAR / SCHEDULE -->
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title">
+          <div class="icon">📅</div>
+          Schedule
+        </div>
+        <span class="card-count" id="cal-count">0 events</span>
+      </div>
+      <div class="add-row" style="flex-wrap:wrap">
+        <input type="text" id="cal-title" placeholder="Meeting or event title…" style="flex:2;min-width:160px" />
+        <input type="datetime-local" id="cal-date" style="flex:1;min-width:160px" />
+        <button class="btn-add" onclick="addCalItem()">+ Add</button>
+      </div>
+      <div id="cal-list"><p class="empty-state">No events — add meetings, appointments, deadlines</p></div>
+    </div>
+
+  </div>
+
+  <!-- RANCH EVENTS -->
+  <div class="grid-mid">
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title">
+          <div class="icon" style="background:var(--accent-light)">📋</div>
+          Upcoming Ranch Events
+        </div>
+        <span class="card-count" id="events-count">0 events</span>
+      </div>
+      <p style="font-size:11px;color:var(--text-faint);margin-bottom:12px">Ranch operations, livestock, land, equipment — separate from your personal schedule</p>
+      <div class="add-row" style="flex-wrap:wrap">
+        <input type="text" id="event-title" placeholder="Event name (e.g. cattle weigh-in, vet visit, fence repair, hay delivery)…" style="flex:3;min-width:200px" />
+        <input type="date" id="event-date" style="flex:0 0 140px" />
+        <select id="event-cat" style="flex:0 0 130px">
+          <option value="activity">✅ Activity</option>
+          <option value="noactivity">⭕ No Activity</option>
+        </select>
+        <button class="btn-add" onclick="addEvent()">+ Add</button>
+      </div>
+      <div id="events-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:8px">
+        <p class="empty-state" style="grid-column:1/-1">No ranch events added yet</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- RECURRING TASKS -->
+  <div style="margin-bottom:0.5rem"><div class="section-label">Recurring Tasks</div></div>
+  <div class="grid-recur">
+    <div class="recur-card">
+      <div class="recur-header">Daily <span class="recur-freq-label rf-daily">Every day</span></div>
+      <div class="recur-add">
+        <input type="text" id="daily-input" placeholder="Add task…" />
+        <button class="btn-add-sm" onclick="addRecur('daily')">+</button>
+      </div>
+      <div id="daily-list"><p class="empty-state" style="font-size:12px">None</p></div>
+    </div>
+    <div class="recur-card">
+      <div class="recur-header">Weekly <span class="recur-freq-label rf-weekly">Each week</span></div>
+      <div class="recur-add">
+        <input type="text" id="weekly-input" placeholder="Add task…" />
+        <button class="btn-add-sm" onclick="addRecur('weekly')">+</button>
+      </div>
+      <div id="weekly-list"><p class="empty-state" style="font-size:12px">None</p></div>
+    </div>
+    <div class="recur-card">
+      <div class="recur-header">Biweekly <span class="recur-freq-label rf-biweekly">Every 2 wks</span></div>
+      <div class="recur-add">
+        <input type="text" id="biweekly-input" placeholder="Add task…" />
+        <button class="btn-add-sm" onclick="addRecur('biweekly')">+</button>
+      </div>
+      <div id="biweekly-list"><p class="empty-state" style="font-size:12px">None</p></div>
+    </div>
+    <div class="recur-card">
+      <div class="recur-header">Monthly <span class="recur-freq-label rf-monthly">Each month</span></div>
+      <div class="recur-add">
+        <input type="text" id="monthly-input" placeholder="Add task…" />
+        <button class="btn-add-sm" onclick="addRecur('monthly')">+</button>
+      </div>
+      <div id="monthly-list"><p class="empty-state" style="font-size:12px">None</p></div>
+    </div>
+  </div>
+
+  <!-- BUSY WORK + PROJECTS -->
+  <div class="grid-top" style="margin-bottom:1.5rem">
+
+    <!-- BUSY WORK -->
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title">
+          <div class="icon">⚡</div>
+          Busy Work
+        </div>
+        <span class="card-count" id="busy-count">0 items</span>
+      </div>
+      <p style="font-size:11px;color:var(--text-faint);margin-bottom:10px">Quick admin tasks, errands, and low-effort items to knock out</p>
+      <div class="add-row">
+        <input type="text" id="busy-input" placeholder="Add a busy work task…" />
+        <button class="btn-add" onclick="addBusy()">+ Add</button>
+      </div>
+      <div id="busy-list"><p class="empty-state">No busy work items yet</p></div>
+    </div>
+
+    <!-- ONGOING PROJECTS -->
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title">
+          <div class="icon">📁</div>
+          Projects
+        </div>
+        <span class="card-count" id="projects-count">0 projects</span>
+      </div>
+      <p style="font-size:11px;color:var(--text-faint);margin-bottom:10px">Ongoing work — track status and leave notes on each</p>
+      <div class="add-row" style="flex-wrap:wrap">
+        <input type="text" id="project-input" placeholder="Project name…" style="flex:2;min-width:140px" />
+        <select id="project-status" style="flex:0 0 110px">
+          <option value="active">Active</option>
+          <option value="waiting">Waiting</option>
+          <option value="stalled">Stalled</option>
+          <option value="done">Done</option>
+        </select>
+        <button class="btn-add" onclick="addProject()">+ Add</button>
+      </div>
+      <div id="projects-list"><p class="empty-state">No projects added yet</p></div>
+    </div>
+
+  </div>
+
+  <!-- BOTTOM ROW: Brain Dump + Stats/Notes -->
+  <div class="grid-bot">
+
+    <!-- BRAIN DUMP -->
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title">
+          <div class="icon">🧠</div>
+          Brain Dump
+        </div>
+        <span class="card-count" id="dump-count">0 items</span>
+      </div>
+      <p style="font-size:11px;color:var(--text-faint);margin-bottom:10px">Capture it fast — sort it later. Press Shift+Enter or click Save.</p>
+      <textarea class="brain-textarea" id="brain-input" placeholder="Whatever's in your head — an idea, a worry, something you can't forget, a question to answer later…"></textarea>
+      <div class="brain-controls">
+        <select id="brain-cat">
+          <option value="unsorted">— unsorted —</option>
+          <option value="todo">→ Send to To-do</option>
+          <option value="ranch">→ Send to Ranch</option>
+          <option value="meeting">→ Send to Schedule</option>
+          <option value="idea">💡 Idea</option>
+          <option value="question">❓ Question</option>
+          <option value="note">📋 Note</option>
+        </select>
+        <button class="btn-add" onclick="addDump()">Save</button>
+      </div>
+      <div id="dump-list" style="margin-top:14px"></div>
+    </div>
+
+    <!-- SIDEBAR: Stats + Pinned Notes -->
+    <div>
+      <div class="stat-block">
+        <div class="section-label" style="margin-bottom:12px">Today's Progress</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+          <div>
+            <div class="stat-num" id="stat-done">0</div>
+            <div class="stat-label">Tasks done</div>
+            <div class="stat-bar"><div class="stat-bar-fill" id="stat-bar" style="width:0%"></div></div>
+          </div>
+          <div>
+            <div class="stat-num" id="stat-pending">0</div>
+            <div class="stat-label">Remaining</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="stat-block">
+        <div class="section-label" style="margin-bottom:10px">This Month</div>
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+          <div class="stat-label">Ranch events</div>
+          <strong id="stat-events-month" style="font-size:18px;font-family:'Playfair Display',serif">0</strong>
+        </div>
+        <div style="display:flex;justify-content:space-between;align-items:center">
+          <div class="stat-label">Calendar events</div>
+          <strong id="stat-cal-month" style="font-size:18px;font-family:'Playfair Display',serif">0</strong>
+        </div>
+      </div>
+
+      <div class="quick-note">
+        <div class="card-header" style="border-bottom:1px solid rgba(196,123,43,0.2)">
+          <div class="card-title">
+            <div class="icon">📌</div>
+            Pinned Notes
+          </div>
+        </div>
+        <div style="margin-bottom:10px">
+          <textarea class="note-textarea" id="note-input" placeholder="Pin a quick note…" rows="2"></textarea>
+          <button class="btn-add" style="width:100%;margin-top:6px;background:var(--amber)" onclick="addNote()">Pin it</button>
+        </div>
+        <div id="notes-list"><p class="empty-state" style="font-size:12px;font-style:italic;color:var(--amber);opacity:0.6">No pinned notes</p></div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+// ── State ──────────────────────────────────────────────────────────────────
+let state = {
+  todos: [],
+  calItems: [],
+  events: [],
+  recurring: { daily: [], weekly: [], biweekly: [], monthly: [] },
+  dumps: [],
+  notes: [],
+  busy: [],
+  projects: [],
+  focus: ''
+};
+
+// ── Supabase Config ────────────────────────────────────────────────────────
+const SUPABASE_URL = 'https://ttmqzhnhixzfmscnqswz.supabase.co/rest/v1';
+const SUPABASE_KEY = 'sb_publishable_l-o-5VqhdHE6Vgd1CEIKXQ_ZZEla2-0';
+const HEADERS = {
+  'Content-Type': 'application/json',
+  'apikey': SUPABASE_KEY,
+  'Authorization': 'Bearer ' + SUPABASE_KEY
+};
+
+// ── Persistence ────────────────────────────────────────────────────────────
+let saveTimer = null;
+function save() {
+  // Also keep localStorage as instant fallback
+  try { localStorage.setItem('ranch_dash', JSON.stringify(state)); } catch(e) {}
+  // Debounce cloud saves so rapid changes don't hammer the API
+  clearTimeout(saveTimer);
+  saveTimer = setTimeout(saveToCloud, 800);
+}
+
+async function saveToCloud() {
+  try {
+    const value = JSON.stringify(state);
+    // Upsert: insert if not exists, update if exists
+    const res = await fetch(SUPABASE_URL + '/dashboard?on_conflict=key', {
+      method: 'POST',
+      headers: { ...HEADERS, 'Prefer': 'resolution=merge-duplicates' },
+      body: JSON.stringify({ key: 'ranch_state', value })
+    });
+    if (!res.ok) {
+      const err = await res.text();
+      console.warn('Save failed:', err);
+    }
+  } catch(e) {
+    console.warn('Cloud save error:', e);
+  }
+}
+
+async function loadFromCloud() {
+  try {
+    const res = await fetch(SUPABASE_URL + '/dashboard?key=eq.ranch_state&select=value', {
+      headers: HEADERS
+    });
+    if (!res.ok) throw new Error(await res.text());
+    const rows = await res.json();
+    if (rows && rows.length > 0 && rows[0].value) {
+      const saved = JSON.parse(rows[0].value);
+      if (!saved || typeof saved !== 'object') return false;
+      if (Array.isArray(saved.todos))     state.todos     = saved.todos;
+      if (Array.isArray(saved.calItems))  state.calItems  = saved.calItems;
+      if (Array.isArray(saved.events))    state.events    = saved.events;
+      if (Array.isArray(saved.dumps))     state.dumps     = saved.dumps;
+      if (Array.isArray(saved.notes))     state.notes     = saved.notes;
+      if (Array.isArray(saved.busy))      state.busy      = saved.busy;
+      if (Array.isArray(saved.projects))  state.projects  = saved.projects;
+      if (typeof saved.focus === 'string') state.focus    = saved.focus;
+      if (saved.recurring && typeof saved.recurring === 'object') {
+        ['daily','weekly','biweekly','monthly'].forEach(f => {
+          if (Array.isArray(saved.recurring[f])) state.recurring[f] = saved.recurring[f];
+        });
+      }
+      return true;
+    }
+    return false;
+  } catch(e) {
+    console.warn('Cloud load error:', e);
+    return false;
+  }
+}
+
+function loadFromLocal() {
+  try {
+    const d = localStorage.getItem('ranch_dash');
+    if (!d) return false;
+    const saved = JSON.parse(d);
+    if (!saved || typeof saved !== 'object') return false;
+    if (Array.isArray(saved.todos))     state.todos     = saved.todos;
+    if (Array.isArray(saved.calItems))  state.calItems  = saved.calItems;
+    if (Array.isArray(saved.events))    state.events    = saved.events;
+    if (Array.isArray(saved.dumps))     state.dumps     = saved.dumps;
+    if (Array.isArray(saved.notes))     state.notes     = saved.notes;
+    if (Array.isArray(saved.busy))      state.busy      = saved.busy;
+    if (Array.isArray(saved.projects))  state.projects  = saved.projects;
+    if (typeof saved.focus === 'string') state.focus    = saved.focus;
+    if (saved.recurring && typeof saved.recurring === 'object') {
+      ['daily','weekly','biweekly','monthly'].forEach(f => {
+        if (Array.isArray(saved.recurring[f])) state.recurring[f] = saved.recurring[f];
+      });
+    }
+    return true;
+  } catch(e) { return false; }
+}
+
+// ── Init ───────────────────────────────────────────────────────────────────
+// ── Init ───────────────────────────────────────────────────────────────────
+document.getElementById('topbar-date').textContent =
+  new Date().toLocaleDateString('en-US', { weekday:'long', month:'long', day:'numeric', year:'numeric' });
+
+// Show loading indicator
+document.body.insertAdjacentHTML('afterbegin', `
+  <div id="loading-overlay" style="position:fixed;inset:0;background:var(--bg);z-index:9999;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px">
+    <div style="font-family:'Playfair Display',serif;font-size:22px;color:var(--text)">Ranch Dashboard</div>
+    <div style="font-size:13px;color:var(--text-muted)" id="loading-msg">Loading your data…</div>
+    <div style="width:40px;height:40px;border:3px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin 0.8s linear infinite"></div>
+  </div>
+  <style>@keyframes spin{to{transform:rotate(360deg)}}</style>
+`);
+
+(async () => {
+  // Try cloud first, fall back to localStorage
+  const cloudOk = await loadFromCloud();
+  if (!cloudOk) {
+    document.getElementById('loading-msg').textContent = 'Cloud unavailable — loading local backup…';
+    loadFromLocal();
+  }
+
+  document.getElementById('focus-input').value = state.focus || '';
+  document.getElementById('focus-input').addEventListener('input', e => { state.focus = e.target.value; save(); });
+
+  renderAll();
+
+  // If we loaded from local, push it up to cloud
+  if (!cloudOk) saveToCloud();
+
+  // Remove loading overlay
+  const overlay = document.getElementById('loading-overlay');
+  if (overlay) overlay.remove();
+})();
+
+// ── Keyboard shortcuts ─────────────────────────────────────────────────────
+function enterAdd(id, fn) {
+  document.getElementById(id).addEventListener('keydown', e => { if (e.key === 'Enter') fn(); });
+}
+enterAdd('busy-input', addBusy);
+enterAdd('project-input', addProject);
+enterAdd('todo-input', addTodo);
+enterAdd('event-title', addEvent);
+enterAdd('cal-title', () => { if (!document.getElementById('cal-date').value) return; addCalItem(); });
+['daily','weekly','biweekly','monthly'].forEach(f => enterAdd(f+'-input', () => addRecur(f)));
+document.getElementById('brain-input').addEventListener('keydown', e => {
+  if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); addDump(); }
+});
+document.getElementById('note-input').addEventListener('keydown', e => {
+  if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); addNote(); }
+});
+
+// ── TODO ───────────────────────────────────────────────────────────────────
+function addTodo() {
+  const inp = document.getElementById('todo-input');
+  const pri = document.getElementById('todo-priority').value;
+  if (!inp.value.trim()) return;
+  state.todos.push({ text: inp.value.trim(), done: false, priority: pri, id: Date.now() });
+  inp.value = '';
+  save(); renderTodos(); updateStats();
+}
+function toggleTodo(id) {
+  const t = state.todos.find(x => x.id === id);
+  if (t) t.done = !t.done;
+  save(); renderTodos(); updateStats();
+}
+function deleteTodo(id) {
+  state.todos = state.todos.filter(x => x.id !== id);
+  save(); renderTodos(); updateStats();
+}
+function renderTodos() {
+  const el = document.getElementById('todo-list');
+  const sorted = [...state.todos].sort((a,b) => {
+    const po = { high:0, med:1, low:2 };
+    if (a.done !== b.done) return a.done ? 1 : -1;
+    const pa = po[a.priority] !== undefined ? po[a.priority] : 1;
+    const pb = po[b.priority] !== undefined ? po[b.priority] : 1;
+    return pa - pb;
+  });
+  document.getElementById('todo-count').textContent = state.todos.length + ' item' + (state.todos.length !== 1 ? 's' : '');
+  if (!sorted.length) { el.innerHTML = '<p class="empty-state">No tasks yet — add one above</p>'; return; }
+  el.innerHTML = sorted.map(t => `
+    <div class="task-item">
+      <input type="checkbox" ${t.done?'checked':''} onchange="toggleTodo(${t.id})">
+      <span class="task-text ${t.done?'done':''}">${esc(t.text)}</span>
+      <span class="priority p-${t.priority}">${t.priority}</span>
+      <button class="btn-del" onclick="deleteTodo(${t.id})" title="Delete">×</button>
+    </div>`).join('');
+}
+
+// ── CALENDAR ───────────────────────────────────────────────────────────────
+function addCalItem() {
+  const title = document.getElementById('cal-title').value.trim();
+  const date  = document.getElementById('cal-date').value;
+  if (!title) return;
+  state.calItems.push({ title, date, id: Date.now() });
+  document.getElementById('cal-title').value = '';
+  document.getElementById('cal-date').value = '';
+  save(); renderCal(); updateStats();
+}
+function deleteCalItem(id) {
+  state.calItems = state.calItems.filter(x => x.id !== id);
+  save(); renderCal(); updateStats();
+}
+function calBadge(dateStr) {
+  if (!dateStr) return { cls:'cb-future', label:'No date' };
+  const diff = Math.floor((new Date(dateStr) - new Date()) / 86400000);
+  if (diff < 0)  return { cls:'cb-future', label:'Past' };
+  if (diff === 0) return { cls:'cb-today', label:'Today' };
+  if (diff <= 7)  return { cls:'cb-week',  label:'This week' };
+  if (diff <= 30) return { cls:'cb-month', label:'This month' };
+  return { cls:'cb-future', label:'Upcoming' };
+}
+function renderCal() {
+  const el = document.getElementById('cal-list');
+  const sorted = [...state.calItems].sort((a,b) => {
+    if (!a.date) return 1; if (!b.date) return -1;
+    return new Date(a.date) - new Date(b.date);
+  });
+  document.getElementById('cal-count').textContent = state.calItems.length + ' event' + (state.calItems.length !== 1 ? 's' : '');
+  if (!sorted.length) { el.innerHTML = '<p class="empty-state">No events — add meetings, appointments, deadlines</p>'; return; }
+  el.innerHTML = sorted.map(c => {
+    const d = c.date ? new Date(c.date) : null;
+    const mon = d ? d.toLocaleDateString('en-US',{month:'short'}).toUpperCase() : '—';
+    const day = d ? d.getDate() : '—';
+    const timeStr = d ? d.toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric',year:'numeric'}) + (d.getHours()||d.getMinutes() ? ', ' + d.toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'}) : '') : 'No date set';
+    const b = calBadge(c.date);
+    return `<div class="cal-item">
+      <div class="cal-date-block"><div class="month">${mon}</div><div class="day">${day}</div></div>
+      <div class="cal-item-body">
+        <div class="cal-item-title">${esc(c.title)} <span class="cal-badge ${b.cls}">${b.label}</span></div>
+        <div class="cal-item-sub">${timeStr}</div>
+      </div>
+      <button class="btn-del" onclick="deleteCalItem(${c.id})" title="Delete">×</button>
+    </div>`;
+  }).join('');
+}
+
+// ── RANCH EVENTS ───────────────────────────────────────────────────────────
+const catColors = {
+  activity:'#2A7A5E', noactivity:'#3B6B8A'
+};
+const catLabels = {
+  activity:'✅ Activity', noactivity:'⭕ No Activity'
+};
+function addEvent() {
+  const title = document.getElementById('event-title').value.trim();
+  const date  = document.getElementById('event-date').value;
+  const cat   = document.getElementById('event-cat').value;
+  if (!title) return;
+  state.events.push({ title, date, cat, id: Date.now() });
+  document.getElementById('event-title').value = '';
+  document.getElementById('event-date').value = '';
+  save(); renderEvents(); updateStats();
+}
+function deleteEvent(id) {
+  state.events = state.events.filter(x => x.id !== id);
+  save(); renderEvents(); updateStats();
+}
+function renderEvents() {
+  const el = document.getElementById('events-grid');
+  const sorted = [...state.events].sort((a,b) => {
+    if (!a.date) return 1; if (!b.date) return -1;
+    return new Date(a.date) - new Date(b.date);
+  });
+  document.getElementById('events-count').textContent = state.events.length + ' event' + (state.events.length !== 1 ? 's' : '');
+  if (!sorted.length) { el.innerHTML = '<p class="empty-state" style="grid-column:1/-1">No ranch events added yet</p>'; return; }
+  el.innerHTML = sorted.map(e => {
+    const dateStr = e.date ? new Date(e.date + 'T12:00').toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}) : 'No date';
+    const color = catColors[e.cat] || '#7A6F5E';
+    return `<div class="event-item">
+      <span class="event-cat-dot" style="background:${color}"></span>
+      <div style="flex:1;min-width:0">
+        <div class="event-text">${esc(e.title)}</div>
+        <div style="font-size:10px;color:var(--text-faint);margin-top:1px">${catLabels[e.cat]||''} · ${dateStr}</div>
+      </div>
+      <button class="btn-del" onclick="deleteEvent(${e.id})" title="Delete">×</button>
+    </div>`;
+  }).join('');
+}
+
+// ── RECURRING ──────────────────────────────────────────────────────────────
+function addRecur(freq) {
+  const inp = document.getElementById(freq + '-input');
+  if (!inp.value.trim()) return;
+  state.recurring[freq].push({ text: inp.value.trim(), done: false, id: Date.now() });
+  inp.value = '';
+  save(); renderRecur(freq);
+}
+function toggleRecur(freq, id) {
+  const t = state.recurring[freq].find(x => x.id === id);
+  if (t) t.done = !t.done;
+  save(); renderRecur(freq);
+}
+function deleteRecur(freq, id) {
+  state.recurring[freq] = state.recurring[freq].filter(x => x.id !== id);
+  save(); renderRecur(freq);
+}
+function renderRecur(freq) {
+  const el = document.getElementById(freq + '-list');
+  const items = state.recurring[freq];
+  if (!items.length) { el.innerHTML = '<p class="empty-state" style="font-size:12px">None</p>'; return; }
+  el.innerHTML = items.map(r => `
+    <div class="recur-item">
+      <input type="checkbox" ${r.done?'checked':''} onchange="toggleRecur('${freq}',${r.id})">
+      <span class="recur-item-text ${r.done?'done':''}">${esc(r.text)}</span>
+      <button class="btn-del-sm" onclick="deleteRecur('${freq}',${r.id})" title="Delete">×</button>
+    </div>`).join('');
+}
+
+// ── BRAIN DUMP ─────────────────────────────────────────────────────────────
+function addDump() {
+  const text = document.getElementById('brain-input').value.trim();
+  const cat  = document.getElementById('brain-cat').value;
+  if (!text) return;
+  state.dumps.push({ text, cat, id: Date.now() });
+  document.getElementById('brain-input').value = '';
+  save(); renderDumps(); updateStats();
+}
+function deleteDump(id) {
+  state.dumps = state.dumps.filter(x => x.id !== id);
+  save(); renderDumps(); updateStats();
+}
+function updateDumpCat(id, val) {
+  const d = state.dumps.find(x => x.id === id);
+  if (d) { d.cat = val; save(); renderDumps(); }
+}
+const dumpCatLabels = {
+  unsorted:'unsorted', todo:'→ to-do', ranch:'→ ranch',
+  meeting:'→ schedule', idea:'💡 idea', question:'❓ question', note:'📋 note'
+};
+function renderDumps() {
+  const el = document.getElementById('dump-list');
+  document.getElementById('dump-count').textContent = state.dumps.length + ' item' + (state.dumps.length !== 1 ? 's' : '');
+  if (!state.dumps.length) { el.innerHTML = ''; return; }
+  el.innerHTML = [...state.dumps].reverse().map(d => `
+    <div class="dump-item cat-${d.cat}">
+      <div class="dump-item-text">${esc(d.text)}</div>
+      <select onchange="updateDumpCat(${d.id},this.value)" style="flex-shrink:0">
+        ${Object.entries(dumpCatLabels).map(([v,l]) => `<option value="${v}" ${d.cat===v?'selected':''}>${l}</option>`).join('')}
+      </select>
+      <button class="btn-del" onclick="deleteDump(${d.id})" title="Delete">×</button>
+    </div>`).join('');
+}
+
+// ── PINNED NOTES ───────────────────────────────────────────────────────────
+function addNote() {
+  const text = document.getElementById('note-input').value.trim();
+  if (!text) return;
+  state.notes.push({ text, id: Date.now() });
+  document.getElementById('note-input').value = '';
+  save(); renderNotes();
+}
+function deleteNote(id) {
+  state.notes = state.notes.filter(x => x.id !== id);
+  save(); renderNotes();
+}
+function renderNotes() {
+  const el = document.getElementById('notes-list');
+  if (!state.notes.length) { el.innerHTML = '<p class="empty-state" style="font-size:12px;font-style:italic;color:var(--amber);opacity:0.6">No pinned notes</p>'; return; }
+  el.innerHTML = state.notes.map(n => `
+    <div class="pinned-note">
+      <span class="pin-icon">📌</span>
+      <span style="flex:1;font-size:12px">${esc(n.text)}</span>
+      <button class="btn-del" onclick="deleteNote(${n.id})" title="Delete">×</button>
+    </div>`).join('');
+}
+
+// ── STATS ──────────────────────────────────────────────────────────────────
+function updateStats() {
+  const done = state.todos.filter(t => t.done).length;
+  const total = state.todos.length;
+  const pct = total ? Math.round((done / total) * 100) : 0;
+  document.getElementById('stat-done').textContent = done;
+  document.getElementById('stat-pending').textContent = total - done;
+  document.getElementById('stat-bar').style.width = pct + '%';
+  document.getElementById('ts-done').textContent = done;
+
+  const now = new Date();
+  const thisMonth = e => {
+    if (!e.date) return false;
+    const d = new Date(e.date + (e.date.includes('T') ? '' : 'T12:00'));
+    return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
+  };
+  const evMonth = state.events.filter(thisMonth).length;
+  const calMonth = state.calItems.filter(c => c.date && thisMonth({date:c.date})).length;
+  document.getElementById('stat-events-month').textContent = evMonth;
+  document.getElementById('stat-cal-month').textContent = calMonth;
+  document.getElementById('ts-events').textContent = state.events.length;
+  document.getElementById('ts-dump').textContent = state.dumps.length;
+}
+
+// ── RENDER ALL ─────────────────────────────────────────────────────────────
+function renderAll() {
+  renderTodos();
+  renderCal();
+  renderEvents();
+  ['daily','weekly','biweekly','monthly'].forEach(renderRecur);
+  renderBusy();
+  renderProjects();
+  renderDumps();
+  renderNotes();
+  updateStats();
+}
+
+// ── BUSY WORK ──────────────────────────────────────────────────────────────
+function addBusy() {
+  const inp = document.getElementById('busy-input');
+  if (!inp.value.trim()) return;
+  state.busy.push({ text: inp.value.trim(), done: false, id: Date.now() });
+  inp.value = '';
+  save(); renderBusy();
+}
+function toggleBusy(id) {
+  const t = state.busy.find(x => x.id === id);
+  if (t) t.done = !t.done;
+  save(); renderBusy();
+}
+function deleteBusy(id) {
+  state.busy = state.busy.filter(x => x.id !== id);
+  save(); renderBusy();
+}
+function renderBusy() {
+  const el = document.getElementById('busy-list');
+  const sorted = [...state.busy].sort((a,b) => a.done - b.done);
+  document.getElementById('busy-count').textContent = state.busy.length + ' item' + (state.busy.length !== 1 ? 's' : '');
+  if (!sorted.length) { el.innerHTML = '<p class="empty-state">No busy work items yet</p>'; return; }
+  el.innerHTML = sorted.map(t => `
+    <div class="busy-item">
+      <input type="checkbox" ${t.done?'checked':''} onchange="toggleBusy(${t.id})">
+      <span class="busy-text ${t.done?'done':''}">${esc(t.text)}</span>
+      <button class="btn-del" onclick="deleteBusy(${t.id})" title="Delete">×</button>
+    </div>`).join('');
+}
+
+// ── PROJECTS ───────────────────────────────────────────────────────────────
+function addProject() {
+  const inp = document.getElementById('project-input');
+  const status = document.getElementById('project-status').value;
+  if (!inp.value.trim()) return;
+  state.projects.push({ name: inp.value.trim(), status, notes: '', id: Date.now() });
+  inp.value = '';
+  save(); renderProjects();
+}
+function deleteProject(id) {
+  state.projects = state.projects.filter(x => x.id !== id);
+  save(); renderProjects();
+}
+function updateProjectStatus(id, val) {
+  const p = state.projects.find(x => x.id === id);
+  if (p) { p.status = val; save(); renderProjects(); }
+}
+function updateProjectNotes(id, val) {
+  const p = state.projects.find(x => x.id === id);
+  if (p) { p.notes = val; save(); }
+}
+const statusLabels = { active:'Active', waiting:'Waiting', stalled:'Stalled', done:'Done' };
+const statusCls    = { active:'ps-active', waiting:'ps-waiting', stalled:'ps-stalled', done:'ps-done' };
+function renderProjects() {
+  const el = document.getElementById('projects-list');
+  const order = { active:0, waiting:1, stalled:2, done:3 };
+  const sorted = [...state.projects].sort((a,b) => {
+    const oa = order[a.status] !== undefined ? order[a.status] : 0;
+    const ob = order[b.status] !== undefined ? order[b.status] : 0;
+    return oa - ob;
+  });
+  document.getElementById('projects-count').textContent = state.projects.length + ' project' + (state.projects.length !== 1 ? 's' : '');
+  if (!sorted.length) { el.innerHTML = '<p class="empty-state">No projects added yet</p>'; return; }
+  el.innerHTML = sorted.map(p => {
+    const name   = p.name || p.text || 'Unnamed project';
+    const status = p.status || 'active';
+    const notes  = p.notes || '';
+    const id     = p.id;
+    return `
+    <div class="project-item">
+      <div class="project-body">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px">
+          <span class="project-name ${status==='done'?'done':''}">${esc(name)}</span>
+          <select onchange="updateProjectStatus(${id},this.value)" style="font-size:11px;border:1px solid var(--border-light);border-radius:6px;background:var(--surface);color:var(--text-muted);padding:1px 4px;font-family:'DM Sans',sans-serif">
+            ${Object.entries(statusLabels).map(([v,l])=>`<option value="${v}" ${status===v?'selected':''}>${l}</option>`).join('')}
+          </select>
+        </div>
+        <input type="text" value="${esc(notes)}" placeholder="Add a note…" onchange="updateProjectNotes(${id},this.value)"
+          style="width:100%;font-size:11px;background:transparent;border:none;border-bottom:1px solid var(--border-light);color:var(--text-muted);font-family:'DM Sans',sans-serif;padding:2px 0;outline:none" />
+      </div>
+      <button class="btn-del" onclick="deleteProject(${id})" title="Delete">×</button>
+    </div>`;
+  }).join('');
+}
+
+// ── UTILS ──────────────────────────────────────────────────────────────────
+function esc(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+</script>
+</body>
+</html>
