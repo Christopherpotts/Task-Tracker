@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Task Tracker 0.03</title>
+<title>Task Tracker 0.05</title>
 <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>📋</text></svg>">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;600&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
@@ -580,6 +580,7 @@
     flex-shrink: 0;
     margin-top: 1px;
   }
+  .ps-working  { background: var(--amber-light); color: var(--amber); }
   .ps-active   { background: var(--accent2-light); color: var(--accent2); }
   .ps-stalled  { background: var(--danger-light); color: var(--danger); }
   .ps-waiting  { background: var(--amber-light); color: var(--amber); }
@@ -603,6 +604,44 @@
   .busy-text { flex: 1; font-size: 13px; color: var(--text); }
   .busy-text.done { text-decoration: line-through; color: var(--text-faint); }
 
+  /* WORKING ON BAR */
+  .working-bar {
+    background: var(--surface);
+    border: 1px solid #E8C97A;
+    border-left: 4px solid var(--amber);
+    border-radius: var(--radius-lg);
+    padding: 0.85rem 1.25rem;
+    margin-bottom: 1.5rem;
+    box-shadow: var(--shadow);
+    display: none;
+  }
+  .working-bar.has-items { display: block; }
+  .working-bar-header {
+    font-size: 11px;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--amber);
+    margin-bottom: 8px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .working-chips { display: flex; flex-wrap: wrap; gap: 8px; }
+  .working-chip {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    background: var(--amber-light);
+    border: 1px solid #E8C97A;
+    border-radius: 20px;
+    padding: 4px 12px;
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--amber);
+    cursor: default;
+  }
+
   /* SCROLLBAR */
   ::-webkit-scrollbar { width: 6px; }
   ::-webkit-scrollbar-track { background: transparent; }
@@ -615,7 +654,7 @@
 <div class="topbar">
   <div class="topbar-brand">
     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9,22 9,12 15,12 15,22"/></svg>
-    Task Tracker 0.03
+    Task Tracker 0.05
   </div>
   <div class="topbar-date" id="topbar-date"></div>
   <div class="topbar-stats">
@@ -632,6 +671,12 @@
 </div>
 
 <div class="main">
+
+  <!-- WORKING ON BAR -->
+  <div class="working-bar" id="working-bar">
+    <div class="working-bar-header">⚡ Working on now</div>
+    <div class="working-chips" id="working-chips"></div>
+  </div>
 
   <!-- TOP ROW: Todo + Calendar -->
   <div class="grid-top">
@@ -771,7 +816,8 @@
       <p style="font-size:11px;color:var(--text-faint);margin-bottom:10px">Ongoing work — track status and leave notes on each</p>
       <div class="add-row" style="flex-wrap:wrap">
         <input type="text" id="project-input" placeholder="Project name…" style="flex:2;min-width:140px" />
-        <select id="project-status" style="flex:0 0 110px">
+        <select id="project-status" style="flex:0 0 120px">
+          <option value="working">Working on</option>
           <option value="active">Active</option>
           <option value="waiting">Waiting</option>
           <option value="stalled">Stalled</option>
@@ -1273,7 +1319,7 @@ function renderAll() {
   renderEvents();
   ['daily','weekly','biweekly','monthly'].forEach(renderRecur);
   renderBusy();
-  renderProjects();
+  renderProjects(); // renderWorkingBar is called inside renderProjects
   renderDumps();
   renderNotes();
   updateStats();
@@ -1330,14 +1376,14 @@ function updateProjectNotes(id, val) {
   const p = state.projects.find(x => x.id === id);
   if (p) { p.notes = val; save(); }
 }
-const statusLabels = { active:'Active', waiting:'Waiting', stalled:'Stalled', done:'Done' };
-const statusCls    = { active:'ps-active', waiting:'ps-waiting', stalled:'ps-stalled', done:'ps-done' };
+const statusLabels = { working:'Working on', active:'Active', waiting:'Waiting', stalled:'Stalled', done:'Done' };
+const statusCls    = { working:'ps-working', active:'ps-active', waiting:'ps-waiting', stalled:'ps-stalled', done:'ps-done' };
 function renderProjects() {
   const el = document.getElementById('projects-list');
-  const order = { active:0, waiting:1, stalled:2, done:3 };
+  const order = { working:0, active:1, waiting:2, stalled:3, done:4 };
   const sorted = [...state.projects].sort((a,b) => {
-    const oa = order[a.status] !== undefined ? order[a.status] : 0;
-    const ob = order[b.status] !== undefined ? order[b.status] : 0;
+    const oa = order[a.status] !== undefined ? order[a.status] : 1;
+    const ob = order[b.status] !== undefined ? order[b.status] : 1;
     return oa - ob;
   });
   document.getElementById('projects-count').textContent = state.projects.length + ' project' + (state.projects.length !== 1 ? 's' : '');
@@ -1347,8 +1393,9 @@ function renderProjects() {
     const status = p.status || 'active';
     const notes  = p.notes || '';
     const id     = p.id;
+    const isWorking = status === 'working';
     return `
-    <div class="project-item">
+    <div class="project-item" style="${isWorking ? 'border:1px solid #E8C97A;' : ''}">
       <div class="project-body">
         <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px">
           <span class="project-name ${status==='done'?'done':''}">${esc(name)}</span>
@@ -1362,6 +1409,23 @@ function renderProjects() {
       <button class="btn-del" onclick="deleteProject(${id})" title="Delete">×</button>
     </div>`;
   }).join('');
+  renderWorkingBar();
+}
+
+function renderWorkingBar() {
+  const working = state.projects.filter(p => (p.status || 'active') === 'working');
+  const bar = document.getElementById('working-bar');
+  const chips = document.getElementById('working-chips');
+  if (!working.length) {
+    bar.classList.remove('has-items');
+    chips.innerHTML = '';
+    return;
+  }
+  bar.classList.add('has-items');
+  chips.innerHTML = working.map(p => `
+    <div class="working-chip">
+      ⚡ ${esc(p.name || p.text || 'Project')}
+    </div>`).join('');
 }
 
 // ── UTILS ──────────────────────────────────────────────────────────────────
