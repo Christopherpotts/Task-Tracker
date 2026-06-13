@@ -1548,54 +1548,112 @@ function switchTab(t) {
 
 // ── GUEST COUNT ────────────────────────────────────────────────────────────
 let gcRows = [];
+let gcSaveTimer = null;
 
-function buildGcTable() {
+// ── GC key format: gc_2026_06 ──────────────────────────────────────────────
+function gcKey() {
+  const m = String(parseInt(document.getElementById('gc-month').value) + 1).padStart(2,'0');
+  const y = document.getElementById('gc-year').value;
+  return `gc_${y}_${m}`;
+}
+
+async function gcSave() {
+  const key = gcKey();
+  const value = JSON.stringify(gcRows);
+  try {
+    localStorage.setItem(key, value);
+  } catch(e) {}
+  clearTimeout(gcSaveTimer);
+  gcSaveTimer = setTimeout(async () => {
+    try {
+      // Try PATCH first
+      const res = await fetch(SUPABASE_URL + '/dashboard?key=eq.' + key, {
+        method: 'PATCH',
+        headers: { ...HEADERS, 'Prefer': 'return=minimal' },
+        body: JSON.stringify({ value })
+      });
+      // If no row existed (0 rows updated), INSERT
+      if (res.status === 404 || (await res.headers.get('content-range') === '0-0/0')) {
+        await fetch(SUPABASE_URL + '/dashboard', {
+          method: 'POST',
+          headers: { ...HEADERS, 'Prefer': 'return=minimal' },
+          body: JSON.stringify({ key, value })
+        });
+      }
+    } catch(e) { console.warn('GC save error:', e); }
+  }, 800);
+}
+
+async function gcLoad() {
+  const key = gcKey();
+  // Try cloud first
+  try {
+    const res = await fetch(SUPABASE_URL + '/dashboard?key=eq.' + key + '&select=value', { headers: HEADERS });
+    if (res.ok) {
+      const rows = await res.json();
+      if (rows && rows.length > 0 && rows[0].value) return JSON.parse(rows[0].value);
+    }
+  } catch(e) {}
+  // Fall back to localStorage
+  try {
+    const local = localStorage.getItem(key);
+    if (local) return JSON.parse(local);
+  } catch(e) {}
+  return null;
+}
+
+async function buildGcTable() {
   const month = parseInt(document.getElementById('gc-month').value);
   const year  = parseInt(document.getElementById('gc-year').value);
   const days  = new Date(year, month + 1, 0).getDate();
   const tbody = document.getElementById('gc-body');
+  tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;padding:1rem;color:var(--text-faint);font-size:13px">Loading…</td></tr>';
+
+  // Load saved data for this month
+  const saved = await gcLoad();
   gcRows = [];
   tbody.innerHTML = '';
-
-  // Set current month as default
-  const now = new Date();
-  if (!document._gcInit) {
-    document.getElementById('gc-month').value = now.getMonth();
-    document.getElementById('gc-year').value  = now.getFullYear();
-    document._gcInit = true;
-  }
 
   for (let d = 1; d <= days; d++) {
     const date  = new Date(year, month, d);
     const label = date.toLocaleDateString('en-US', { weekday:'short', month:'short', day:'numeric' });
-    gcRows.push({ raw:'', xg:'', bnb:'' });
+    const saved_row = saved && saved[d-1] ? saved[d-1] : { raw:'', xg:'', bnb:'' };
+    gcRows.push({ raw: saved_row.raw || '', xg: saved_row.xg || '', bnb: saved_row.bnb || '' });
     const i  = d - 1;
     const tr = document.createElement('tr');
     tr.innerHTML = `
       <td class="date-cell">${label}</td>
-      <td><input type="number" min="0" placeholder="—" data-i="${i}" data-f="raw" oninput="gcRecalc(${i})" onpaste="gcPaste(event,'raw',${i})" onkeydown="gcNav(event,${i},'raw')"></td>
-      <td><input type="number" min="0" placeholder="—" data-i="${i}" data-f="xg"  oninput="gcRecalc(${i})" onpaste="gcPaste(event,'xg',${i})"  onkeydown="gcNav(event,${i},'xg')"></td>
+      <td><input type="number" min="0" placeholder="—" data-i="${i}" data-f="raw" value="${gcRows[i].raw}" oninput="gcRecalc(${i})" onpaste="gcPaste(event,'raw',${i})" onkeydown="gcNav(event,${i},'raw')"></td>
+      <td><input type="number" min="0" placeholder="—" data-i="${i}" data-f="xg"  value="${gcRows[i].xg}"  oninput="gcRecalc(${i})" onpaste="gcPaste(event,'xg',${i})"  onkeydown="gcNav(event,${i},'xg')"></td>
       <td class="gc-total-cell"><span id="gc-tot-${i}">—</span></td>
-      <td class="gc-bnb-cell"><input type="number" min="0" placeholder="—" data-i="${i}" data-f="bnb" class="gc-bnb-input" oninput="gcRecalcBnb(${i})" onpaste="gcPaste(event,'bnb',${i})" onkeydown="gcNav(event,${i},'bnb')"></td>
+      <td class="gc-bnb-cell"><input type="number" min="0" placeholder="—" data-i="${i}" data-f="bnb" class="gc-bnb-input" value="${gcRows[i].bnb}" oninput="gcRecalcBnb(${i})" onpaste="gcPaste(event,'bnb',${i})" onkeydown="gcNav(event,${i},'bnb')"></td>
     `;
     tbody.appendChild(tr);
+    // Render saved totals
+    if (gcRows[i].raw !== '') {
+      const raw = parseFloat(gcRows[i].raw) || 0;
+      const xg  = parseFloat(gcRows[i].xg)  || 0;
+      document.getElementById('gc-tot-' + i).textContent = Math.max(0, raw - xg);
+    }
   }
   gcUpdateSummary();
 }
 
 function gcRecalc(i) {
-  const raw = parseFloat(document.querySelector(`input[data-i="${i}"][data-f="raw"]`).value) || 0;
-  const xg  = parseFloat(document.querySelector(`input[data-i="${i}"][data-f="xg"]`).value)  || 0;
   gcRows[i].raw = document.querySelector(`input[data-i="${i}"][data-f="raw"]`).value;
   gcRows[i].xg  = document.querySelector(`input[data-i="${i}"][data-f="xg"]`).value;
+  const raw = parseFloat(gcRows[i].raw) || 0;
+  const xg  = parseFloat(gcRows[i].xg)  || 0;
   const tot = gcRows[i].raw !== '' ? Math.max(0, raw - xg) : null;
   document.getElementById('gc-tot-' + i).textContent = tot !== null ? tot : '—';
   gcUpdateSummary();
+  gcSave();
 }
 
 function gcRecalcBnb(i) {
   gcRows[i].bnb = document.querySelector(`input[data-i="${i}"][data-f="bnb"]`).value;
   gcUpdateSummary();
+  gcSave();
 }
 
 function gcPaste(e, field, startRow) {
@@ -1609,9 +1667,15 @@ function gcPaste(e, field, startRow) {
     if (!inp) return;
     inp.value = v;
     gcRows[i][field] = v;
-    if (field !== 'bnb') gcRecalc(i); else gcRecalcBnb(i);
+    if (field !== 'bnb') {
+      const raw = parseFloat(gcRows[i].raw) || 0;
+      const xg  = parseFloat(gcRows[i].xg)  || 0;
+      const tot = gcRows[i].raw !== '' ? Math.max(0, raw - xg) : null;
+      document.getElementById('gc-tot-' + i).textContent = tot !== null ? tot : '—';
+    }
   });
   gcUpdateSummary();
+  gcSave();
 }
 
 function gcNav(e, i, field) {
@@ -1636,7 +1700,7 @@ function gcNav(e, i, field) {
 
 function gcUpdateSummary() {
   let totals = [], bnbs = [];
-  gcRows.forEach((r, i) => {
+  gcRows.forEach(r => {
     const raw = parseFloat(r.raw) || 0;
     const xg  = parseFloat(r.xg)  || 0;
     if (r.raw !== '') totals.push(Math.max(0, raw - xg));
