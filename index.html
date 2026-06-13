@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Task Tracker 0.05</title>
+<title>Task Tracker 0.03</title>
 <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>📋</text></svg>">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;600&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
@@ -642,6 +642,95 @@
     cursor: default;
   }
 
+  /* TABS */
+  .tab-nav {
+    display: flex;
+    gap: 0;
+    background: var(--surface);
+    border-bottom: 1px solid var(--border-light);
+    padding: 0 2rem;
+    position: sticky;
+    top: 54px;
+    z-index: 99;
+  }
+  .tab-btn {
+    padding: 10px 20px;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text-muted);
+    cursor: pointer;
+    border-bottom: 2px solid transparent;
+    margin-bottom: -1px;
+    background: none;
+    border-top: none;
+    border-left: none;
+    border-right: none;
+    font-family: 'DM Sans', sans-serif;
+    transition: color 0.15s, border-color 0.15s;
+    white-space: nowrap;
+  }
+  .tab-btn:hover { color: var(--text); }
+  .tab-btn.active { color: var(--text); border-bottom-color: var(--accent); }
+  .tab-screen { display: none; }
+  .tab-screen.active { display: block; }
+
+  /* GUEST COUNT TABLE */
+  .gc-wrap { overflow-x: auto; }
+  .gc-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  .gc-table thead tr { border-bottom: 2px solid var(--border); }
+  .gc-table th {
+    padding: 8px 10px;
+    text-align: center;
+    font-size: 11px;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--text-muted);
+    white-space: nowrap;
+  }
+  .gc-table th.hero { font-size: 12px; color: var(--text); }
+  .gc-table th.hero-bnb { font-size: 12px; color: var(--blue); }
+  .gc-table td { padding: 3px 6px; border-bottom: 0.5px solid var(--border-light); vertical-align: middle; }
+  .gc-table td.date-cell { font-size: 12px; color: var(--text-muted); white-space: nowrap; padding-left: 10px; width: 100px; text-align: left; }
+  .gc-table td input {
+    width: 100%;
+    background: transparent;
+    border: none;
+    border-bottom: 1px solid transparent;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 13px;
+    color: var(--text);
+    padding: 4px;
+    text-align: center;
+    outline: none;
+    transition: border-color 0.15s;
+    min-width: 60px;
+  }
+  .gc-table td input:focus { border-bottom-color: var(--border); background: var(--surface2); }
+  .gc-total-cell { font-size: 17px; font-weight: 500; color: var(--text); text-align: center; min-width: 80px; }
+  .gc-bnb-cell { font-size: 17px; font-weight: 500; color: var(--blue); text-align: center; min-width: 80px; }
+  .gc-bnb-input { font-size: 15px !important; font-weight: 500 !important; color: var(--blue) !important; text-align: center; width: 100%; }
+  .gc-table tfoot tr { border-top: 2px solid var(--border); background: var(--surface2); }
+  .gc-table tfoot td { padding: 8px 10px; font-weight: 500; font-size: 13px; }
+  .gc-summary { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 1.25rem; }
+  .gc-summary-card { background: var(--surface); border: 1px solid var(--border-light); border-radius: var(--radius-lg); padding: 12px 16px; box-shadow: var(--shadow); }
+  .gc-summary-label { font-size: 11px; color: var(--text-muted); margin-bottom: 4px; }
+  .gc-summary-num { font-family: 'Playfair Display', serif; font-size: 28px; font-weight: 600; color: var(--text); }
+  .gc-summary-num.blue { color: var(--blue); }
+  .gc-month-sel { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+  .gc-month-sel select {
+    height: 34px;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 13px;
+    padding: 0 10px;
+    outline: none;
+  }
+  .gc-hint { font-size: 11px; color: var(--text-faint); margin-bottom: 12px; }
+
   /* SCROLLBAR */
   ::-webkit-scrollbar { width: 6px; }
   ::-webkit-scrollbar-track { background: transparent; }
@@ -654,7 +743,7 @@
 <div class="topbar">
   <div class="topbar-brand">
     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9,22 9,12 15,12 15,22"/></svg>
-    Task Tracker 0.05
+    Task Tracker 0.03
   </div>
   <div class="topbar-date" id="topbar-date"></div>
   <div class="topbar-stats">
@@ -670,6 +759,14 @@
   <input type="text" id="focus-input" placeholder="What is the one thing that matters most today?" />
 </div>
 
+<!-- TAB NAV -->
+<div class="tab-nav">
+  <button class="tab-btn active" onclick="switchTab('dashboard')">📋 Dashboard</button>
+  <button class="tab-btn" onclick="switchTab('guestcount')">👥 Guest Counts</button>
+</div>
+
+<!-- DASHBOARD SCREEN -->
+<div class="tab-screen active" id="screen-dashboard">
 <div class="main">
 
   <!-- WORKING ON BAR -->
@@ -1046,6 +1143,13 @@ document.body.insertAdjacentHTML('afterbegin', `
   document.getElementById('focus-input').addEventListener('input', e => { state.focus = e.target.value; save(); });
 
   renderAll();
+
+  // Set guest count month/year to current
+  const _now = new Date();
+  const _gcMonthEl = document.getElementById('gc-month');
+  const _gcYearEl  = document.getElementById('gc-year');
+  if (_gcMonthEl) _gcMonthEl.value = _now.getMonth();
+  if (_gcYearEl)  _gcYearEl.value  = _now.getFullYear();
 
   // If we loaded from local, push it up to cloud
   if (!cloudOk) saveToCloud();
@@ -1432,6 +1536,196 @@ function renderWorkingBar() {
 function esc(s) {
   return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 }
+
+// ── TAB SWITCHING ──────────────────────────────────────────────────────────
+function switchTab(t) {
+  document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
+  document.querySelectorAll('.tab-screen').forEach(el => el.classList.remove('active'));
+  document.querySelector(`.tab-btn[onclick*="${t}"]`).classList.add('active');
+  document.getElementById('screen-' + t).classList.add('active');
+  if (t === 'guestcount' && document.getElementById('gc-body').children.length === 0) buildGcTable();
+}
+
+// ── GUEST COUNT ────────────────────────────────────────────────────────────
+let gcRows = [];
+
+function buildGcTable() {
+  const month = parseInt(document.getElementById('gc-month').value);
+  const year  = parseInt(document.getElementById('gc-year').value);
+  const days  = new Date(year, month + 1, 0).getDate();
+  const tbody = document.getElementById('gc-body');
+  gcRows = [];
+  tbody.innerHTML = '';
+
+  // Set current month as default
+  const now = new Date();
+  if (!document._gcInit) {
+    document.getElementById('gc-month').value = now.getMonth();
+    document.getElementById('gc-year').value  = now.getFullYear();
+    document._gcInit = true;
+  }
+
+  for (let d = 1; d <= days; d++) {
+    const date  = new Date(year, month, d);
+    const label = date.toLocaleDateString('en-US', { weekday:'short', month:'short', day:'numeric' });
+    gcRows.push({ raw:'', xg:'', bnb:'' });
+    const i  = d - 1;
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td class="date-cell">${label}</td>
+      <td><input type="number" min="0" placeholder="—" data-i="${i}" data-f="raw" oninput="gcRecalc(${i})" onpaste="gcPaste(event,'raw',${i})" onkeydown="gcNav(event,${i},'raw')"></td>
+      <td><input type="number" min="0" placeholder="—" data-i="${i}" data-f="xg"  oninput="gcRecalc(${i})" onpaste="gcPaste(event,'xg',${i})"  onkeydown="gcNav(event,${i},'xg')"></td>
+      <td class="gc-total-cell"><span id="gc-tot-${i}">—</span></td>
+      <td class="gc-bnb-cell"><input type="number" min="0" placeholder="—" data-i="${i}" data-f="bnb" class="gc-bnb-input" oninput="gcRecalcBnb(${i})" onpaste="gcPaste(event,'bnb',${i})" onkeydown="gcNav(event,${i},'bnb')"></td>
+    `;
+    tbody.appendChild(tr);
+  }
+  gcUpdateSummary();
+}
+
+function gcRecalc(i) {
+  const raw = parseFloat(document.querySelector(`input[data-i="${i}"][data-f="raw"]`).value) || 0;
+  const xg  = parseFloat(document.querySelector(`input[data-i="${i}"][data-f="xg"]`).value)  || 0;
+  gcRows[i].raw = document.querySelector(`input[data-i="${i}"][data-f="raw"]`).value;
+  gcRows[i].xg  = document.querySelector(`input[data-i="${i}"][data-f="xg"]`).value;
+  const tot = gcRows[i].raw !== '' ? Math.max(0, raw - xg) : null;
+  document.getElementById('gc-tot-' + i).textContent = tot !== null ? tot : '—';
+  gcUpdateSummary();
+}
+
+function gcRecalcBnb(i) {
+  gcRows[i].bnb = document.querySelector(`input[data-i="${i}"][data-f="bnb"]`).value;
+  gcUpdateSummary();
+}
+
+function gcPaste(e, field, startRow) {
+  e.preventDefault();
+  const text = (e.clipboardData || window.clipboardData).getData('text');
+  const vals = text.split(/[\n\r]+/).map(v => v.trim()).filter(v => v !== '');
+  vals.forEach((v, offset) => {
+    const i = startRow + offset;
+    if (i >= gcRows.length) return;
+    const inp = document.querySelector(`input[data-i="${i}"][data-f="${field}"]`);
+    if (!inp) return;
+    inp.value = v;
+    gcRows[i][field] = v;
+    if (field !== 'bnb') gcRecalc(i); else gcRecalcBnb(i);
+  });
+  gcUpdateSummary();
+}
+
+function gcNav(e, i, field) {
+  const fields = ['raw','xg','bnb'];
+  if (e.key === 'Enter' || e.key === 'ArrowDown') {
+    e.preventDefault();
+    const next = document.querySelector(`input[data-i="${i+1}"][data-f="${field}"]`);
+    if (next) next.focus();
+  } else if (e.key === 'ArrowUp') {
+    e.preventDefault();
+    const prev = document.querySelector(`input[data-i="${i-1}"][data-f="${field}"]`);
+    if (prev) prev.focus();
+  } else if (e.key === 'Tab') {
+    e.preventDefault();
+    const fi = fields.indexOf(field);
+    const nextField = fields[(fi + 1) % fields.length];
+    const nextRow   = fi === fields.length - 1 ? i + 1 : i;
+    const next = document.querySelector(`input[data-i="${nextRow}"][data-f="${nextField}"]`);
+    if (next) next.focus();
+  }
+}
+
+function gcUpdateSummary() {
+  let totals = [], bnbs = [];
+  gcRows.forEach((r, i) => {
+    const raw = parseFloat(r.raw) || 0;
+    const xg  = parseFloat(r.xg)  || 0;
+    if (r.raw !== '') totals.push(Math.max(0, raw - xg));
+    if (r.bnb !== '') bnbs.push(parseFloat(r.bnb) || 0);
+  });
+  const sumT = totals.reduce((a,b) => a+b, 0);
+  const sumB = bnbs.reduce((a,b) => a+b, 0);
+  document.getElementById('gc-sum-total').textContent = totals.length ? sumT : '—';
+  document.getElementById('gc-avg-total').textContent = totals.length ? Math.round(sumT / totals.length) : '—';
+  document.getElementById('gc-sum-bnb').textContent   = bnbs.length   ? sumB : '—';
+  document.getElementById('gc-avg-bnb').textContent   = bnbs.length   ? Math.round(sumB / bnbs.length)  : '—';
+  document.getElementById('gc-foot-total').textContent = totals.length ? sumT : '—';
+  document.getElementById('gc-foot-bnb').textContent   = bnbs.length   ? sumB : '—';
+}
 </script>
+</div><!-- /main -->
+</div><!-- /screen-dashboard -->
+
+<!-- GUEST COUNT SCREEN -->
+<div class="tab-screen" id="screen-guestcount">
+<div class="main">
+
+  <div class="gc-month-sel">
+    <select id="gc-month" onchange="buildGcTable()">
+      <option value="0">January</option>
+      <option value="1">February</option>
+      <option value="2">March</option>
+      <option value="3">April</option>
+      <option value="4">May</option>
+      <option value="5">June</option>
+      <option value="6">July</option>
+      <option value="7">August</option>
+      <option value="8">September</option>
+      <option value="9">October</option>
+      <option value="10">November</option>
+      <option value="11">December</option>
+    </select>
+    <select id="gc-year" onchange="buildGcTable()">
+      <option>2025</option>
+      <option selected>2026</option>
+      <option>2027</option>
+    </select>
+  </div>
+
+  <p class="gc-hint">Tip: click any cell and paste a column of numbers — it fills down automatically. Enter or ↓ moves down, Tab moves right.</p>
+
+  <div class="gc-summary">
+    <div class="gc-summary-card">
+      <div class="gc-summary-label">Avg daily total</div>
+      <div class="gc-summary-num" id="gc-avg-total">—</div>
+    </div>
+    <div class="gc-summary-card">
+      <div class="gc-summary-label">Monthly total</div>
+      <div class="gc-summary-num" id="gc-sum-total">—</div>
+    </div>
+    <div class="gc-summary-card">
+      <div class="gc-summary-label">Avg daily B&amp;B</div>
+      <div class="gc-summary-num blue" id="gc-avg-bnb">—</div>
+    </div>
+    <div class="gc-summary-card">
+      <div class="gc-summary-label">Monthly B&amp;B</div>
+      <div class="gc-summary-num blue" id="gc-sum-bnb">—</div>
+    </div>
+  </div>
+
+  <div class="gc-wrap">
+    <table class="gc-table" id="gc-table">
+      <thead>
+        <tr>
+          <th style="text-align:left">Date</th>
+          <th>Raw #</th>
+          <th>x-Guest</th>
+          <th class="hero">Total</th>
+          <th class="hero-bnb">B&amp;B</th>
+        </tr>
+      </thead>
+      <tbody id="gc-body"></tbody>
+      <tfoot>
+        <tr>
+          <td colspan="3" style="padding-left:10px;font-size:12px;color:var(--text-muted)">Monthly totals</td>
+          <td class="gc-total-cell" id="gc-foot-total">—</td>
+          <td class="gc-bnb-cell" id="gc-foot-bnb">—</td>
+        </tr>
+      </tfoot>
+    </table>
+  </div>
+
+</div>
+</div><!-- /screen-guestcount -->
+
 </body>
 </html>
