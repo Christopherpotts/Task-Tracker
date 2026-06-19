@@ -1640,8 +1640,7 @@ function deleteProjectStep(id, si) {
 }
 function toggleProjectCard(id) {
   const el = document.getElementById('pcard-' + id);
-  if (!el) return;
-  el.classList.toggle('open');
+  if (el) el.classList.toggle('open');
 }
 function switchProjTab(id, tab) {
   projOpenTabs[id] = tab;
@@ -1665,10 +1664,28 @@ function getCurrentStep(steps) {
   return steps.findIndex(s => !s.done);
 }
 
+function buildStepHTML(steps, pid) {
+  if (!steps || !steps.length) return '<p class="empty-state" style="font-size:12px">No steps yet</p>';
+  const curStep = getCurrentStep(steps);
+  return steps.map(function(s, si) {
+    const isCurrent = si === curStep;
+    let cls = 'proj-step';
+    if (s.done) cls += ' completed';
+    if (isCurrent) cls += ' current';
+    let html = '<div class="' + cls + '">';
+    html += '<input type="checkbox"' + (s.done ? ' checked' : '') + ' onchange="toggleProjectStep(' + pid + ',' + si + ')">';
+    html += '<span class="proj-step-label' + (s.done ? ' done' : '') + '">' + esc(s.text) + '</span>';
+    if (isCurrent) html += '<span class="proj-step-here">&#9654; here</span>';
+    html += '<button class="proj-step-del" onclick="deleteProjectStep(' + pid + ',' + si + ')" title="Remove">&times;</button>';
+    html += '</div>';
+    return html;
+  }).join('');
+}
+
 function renderProjects() {
   const el = document.getElementById('projects-list');
   const order = { working:0, active:1, waiting:2, stalled:3, done:4 };
-  const sorted = [...state.projects].sort((a,b) => {
+  const sorted = [...state.projects].sort(function(a,b) {
     const oa = order[a.status] !== undefined ? order[a.status] : 1;
     const ob = order[b.status] !== undefined ? order[b.status] : 1;
     return oa - ob;
@@ -1676,77 +1693,85 @@ function renderProjects() {
   document.getElementById('projects-count').textContent = state.projects.length + ' project' + (state.projects.length !== 1 ? 's' : '');
   if (!sorted.length) { el.innerHTML = '<p class="empty-state">No projects added yet</p>'; return; }
 
-  el.innerHTML = sorted.map(p => {
-    const name     = p.name || p.text || 'Unnamed project';
-    const status   = p.status || 'active';
-    const steps    = Array.isArray(p.steps) ? p.steps : [];
-    const pct      = getProjectProgress(steps);
-    const curStep  = getCurrentStep(steps);
+  let html = '';
+  sorted.forEach(function(p) {
+    const name      = p.name || p.text || 'Unnamed project';
+    const status    = p.status || 'active';
+    const steps     = Array.isArray(p.steps) ? p.steps : [];
+    const pct       = getProjectProgress(steps);
     const activeTab = projOpenTabs[p.id] || 'plan';
-    const hasResearch = (p.research || '').trim().length > 0;
+    const hasRes    = (p.research || '').trim().length > 0;
     const isWorking = status === 'working';
+    const dueLabel  = p.due ? new Date(p.due + 'T12:00').toLocaleDateString('en-US',{month:'short',day:'numeric'}) : '';
 
-    const stepsHtml = steps.map((s, si) => {
-      const isCurrent = si === curStep;
-      return \`<div class="proj-step \${s.done ? 'completed' : ''} \${isCurrent ? 'current' : ''}">
-        <input type="checkbox" \${s.done ? 'checked' : ''} onchange="toggleProjectStep(\${p.id},\${si})">
-        <span class="proj-step-label \${s.done ? 'done' : ''}">\${esc(s.text)}</span>
-        \${isCurrent ? '<span class="proj-step-here">▶ here</span>' : ''}
-        <button class="proj-step-del" onclick="deleteProjectStep(\${p.id},\${si})" title="Remove">×</button>
-      </div>\`;
-    }).join('');
+    html += '<div class="project-item' + (isWorking ? ' working' : '') + '" id="pcard-' + p.id + '">';
 
-    return \`<div class="project-item \${isWorking ? 'working' : ''}" id="pcard-\${p.id}">
-      <div class="project-header" onclick="toggleProjectCard(\${p.id})">
-        <span class="proj-chevron">▾</span>
-        <span class="project-name \${status==='done'?'done':''}">\${esc(name)}</span>
-        \${pct !== null ? \`<span class="proj-pct">\${pct}%</span>\` : ''}
-        <span class="project-status \${statusCls[status]||'ps-active'}">\${statusLabels[status]||status}</span>
-        \${p.due ? \`<span style="font-size:10px;color:var(--text-faint)">\${new Date(p.due+'T12:00').toLocaleDateString('en-US',{month:'short',day:'numeric'})}</span>\` : ''}
-      </div>
-      \${pct !== null ? \`<div class="proj-progress-bar"><div class="proj-progress-fill" style="width:\${pct}%"></div></div>\` : ''}
-      <div class="project-body">
-        <div class="proj-inner-tabs">
-          <div class="proj-inner-tab \${activeTab==='plan'?'active':''}" onclick="switchProjTab(\${p.id},'plan')">&#9776; Plan</div>
-          <div class="proj-inner-tab \${activeTab==='research'?'active':''}" onclick="switchProjTab(\${p.id},'research')">&#128196; Research\${hasResearch ? '<span class="rdot"></span>' : ''}</div>
-        </div>
-        <div class="proj-tab-pane \${activeTab==='plan'?'active':''}" id="ptab-plan-\${p.id}">
-          <div class="proj-field-label">Overview</div>
-          <textarea class="proj-textarea proj-overview" placeholder="Describe the project, goals, outline…" oninput="updateProjectDesc(\${p.id},this.value)">\${esc(p.desc||'')}</textarea>
-          <div class="proj-field-label" style="margin-top:12px">Steps — <span style="color:var(--amber)">highlighted = where you left off</span></div>
-          <div class="proj-step-list">\${stepsHtml || '<p class="empty-state" style="font-size:12px">No steps yet</p>'}</div>
-          <div class="proj-add-step">
-            <input type="text" id="stepinp-\${p.id}" placeholder="Add a step…" onkeydown="if(event.key==='Enter')addProjectStep(\${p.id})">
-            <button onclick="addProjectStep(\${p.id})">+ Add</button>
-          </div>
-          <div class="proj-footer-row">
-            <div class="proj-due-row">
-              <span style="font-size:11px">Due</span>
-              <input type="date" value="\${p.due||''}" onchange="updateProjectDue(\${p.id},this.value)">
-            </div>
-            <select class="proj-status-sel" onchange="updateProjectStatus(\${p.id},this.value)">
-              \${Object.entries(statusLabels).map(([v,l])=>\`<option value="\${v}" \${status===v?'selected':''}>\${l}</option>\`).join('')}
-            </select>
-          </div>
-        </div>
-        <div class="proj-tab-pane \${activeTab==='research'?'active':''}" id="ptab-research-\${p.id}">
-          <p style="font-size:11px;color:var(--text-faint);margin-bottom:8px;line-height:1.5">Dump everything here — links, how things connect, info gathered, notes from calls, vendor specs, anything you've looked up.</p>
-          <textarea class="proj-textarea proj-research" placeholder="Start typing your research…" oninput="updateProjectResearch(\${p.id},this.value)">\${esc(p.research||'')}</textarea>
-        </div>
-      </div>
-    </div>\`;
-  }).join('');
+    // Header
+    html += '<div class="project-header" onclick="toggleProjectCard(' + p.id + ')">';
+    html += '<span class="proj-chevron">&#9660;</span>';
+    html += '<span class="project-name' + (status === 'done' ? ' done' : '') + '">' + esc(name) + '</span>';
+    if (pct !== null) html += '<span class="proj-pct">' + pct + '%</span>';
+    html += '<span class="project-status ' + (statusCls[status] || 'ps-active') + '">' + (statusLabels[status] || status) + '</span>';
+    if (dueLabel) html += '<span style="font-size:10px;color:var(--text-faint)">' + dueLabel + '</span>';
+    html += '</div>';
+
+    // Progress bar
+    if (pct !== null) html += '<div class="proj-progress-bar"><div class="proj-progress-fill" style="width:' + pct + '%"></div></div>';
+
+    // Body
+    html += '<div class="project-body">';
+
+    // Inner tabs
+    html += '<div class="proj-inner-tabs">';
+    html += '<div class="proj-inner-tab' + (activeTab === 'plan' ? ' active' : '') + '" onclick="switchProjTab(' + p.id + ',\'plan\')">&#9776; Plan</div>';
+    html += '<div class="proj-inner-tab' + (activeTab === 'research' ? ' active' : '') + '" onclick="switchProjTab(' + p.id + ',\'research\')">';
+    html += '&#128196; Research' + (hasRes ? '<span class="rdot"></span>' : '') + '</div>';
+    html += '</div>';
+
+    // Plan tab
+    html += '<div class="proj-tab-pane' + (activeTab === 'plan' ? ' active' : '') + '">';
+    html += '<div class="proj-field-label">Overview</div>';
+    html += '<textarea class="proj-textarea proj-overview" placeholder="Describe the project, goals, outline\u2026" oninput="updateProjectDesc(' + p.id + ',this.value)">' + esc(p.desc || '') + '</textarea>';
+    html += '<div class="proj-field-label" style="margin-top:12px">Steps &mdash; <span style="color:var(--amber)">highlighted = where you left off</span></div>';
+    html += '<div class="proj-step-list">' + buildStepHTML(steps, p.id) + '</div>';
+    html += '<div class="proj-add-step">';
+    html += '<input type="text" id="stepinp-' + p.id + '" placeholder="Add a step\u2026" onkeydown="if(event.key===\'Enter\')addProjectStep(' + p.id + ')">';
+    html += '<button onclick="addProjectStep(' + p.id + ')">+ Add</button>';
+    html += '</div>';
+    html += '<div class="proj-footer-row">';
+    html += '<div class="proj-due-row"><span style="font-size:11px">Due</span>';
+    html += '<input type="date" value="' + (p.due || '') + '" onchange="updateProjectDue(' + p.id + ',this.value)"></div>';
+    html += '<select class="proj-status-sel" onchange="updateProjectStatus(' + p.id + ',this.value)">';
+    Object.entries(statusLabels).forEach(function(entry) {
+      html += '<option value="' + entry[0] + '"' + (status === entry[0] ? ' selected' : '') + '>' + entry[1] + '</option>';
+    });
+    html += '</select></div>';
+    html += '</div>'; // plan pane
+
+    // Research tab
+    html += '<div class="proj-tab-pane' + (activeTab === 'research' ? ' active' : '') + '">';
+    html += '<p style="font-size:11px;color:var(--text-faint);margin-bottom:8px;line-height:1.5">Dump everything here &mdash; links, how things connect, info gathered, notes from calls, vendor specs, anything you\'ve looked up.</p>';
+    html += '<textarea class="proj-textarea proj-research" placeholder="Start typing your research\u2026" oninput="updateProjectResearch(' + p.id + ',this.value)">' + esc(p.research || '') + '</textarea>';
+    html += '</div>'; // research pane
+
+    html += '</div>'; // body
+    html += '</div>'; // card
+  });
+
+  el.innerHTML = html;
   renderWorkingBar();
 }
 
 function renderWorkingBar() {
-  const working = state.projects.filter(p => (p.status || 'active') === 'working');
-  const bar = document.getElementById('working-bar');
+  const working = state.projects.filter(function(p) { return (p.status || 'active') === 'working'; });
+  const bar   = document.getElementById('working-bar');
   const chips = document.getElementById('working-chips');
   if (!bar) return;
   if (!working.length) { bar.classList.remove('has-items'); chips.innerHTML = ''; return; }
   bar.classList.add('has-items');
-  chips.innerHTML = working.map(p => \`<div class="working-chip">⚡ \${esc(p.name || p.text || 'Project')}</div>\`).join('');
+  chips.innerHTML = working.map(function(p) {
+    return '<div class="working-chip">&#9889; ' + esc(p.name || p.text || 'Project') + '</div>';
+  }).join('');
 }
 
 // ── UTILS ──────────────────────────────────────────────────────────────────
