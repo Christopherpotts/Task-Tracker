@@ -562,15 +562,29 @@
 
   /* PROJECT ITEMS */
   .project-item {
-    display: flex;
-    align-items: flex-start;
-    gap: 10px;
-    padding: 9px 10px;
-    border-radius: 8px;
-    background: var(--surface2);
-    margin-bottom: 6px;
+    background: var(--surface);
+    border: 1px solid var(--border-light);
+    border-radius: var(--radius-lg);
+    margin-bottom: 8px;
+    overflow: hidden;
     animation: fadeIn 0.2s ease;
   }
+  .project-item.working { border-left: 3px solid var(--amber); }
+  .project-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 14px;
+    cursor: pointer;
+    user-select: none;
+    transition: background 0.15s;
+  }
+  .project-header:hover { background: var(--surface2); }
+  .proj-chevron { font-size: 13px; color: var(--text-faint); transition: transform 0.2s; flex-shrink: 0; }
+  .project-item.open .proj-chevron { transform: rotate(180deg); }
+  .project-name { flex: 1; font-size: 13px; font-weight: 500; color: var(--text); }
+  .project-name.done { text-decoration: line-through; color: var(--text-faint); }
+  .proj-pct { font-size: 10px; color: var(--text-faint); }
   .project-status {
     font-size: 10px;
     font-weight: 500;
@@ -578,16 +592,112 @@
     border-radius: 20px;
     white-space: nowrap;
     flex-shrink: 0;
-    margin-top: 1px;
   }
   .ps-working  { background: var(--amber-light); color: var(--amber); }
   .ps-active   { background: var(--accent2-light); color: var(--accent2); }
   .ps-stalled  { background: var(--danger-light); color: var(--danger); }
-  .ps-waiting  { background: var(--amber-light); color: var(--amber); }
+  .ps-waiting  { background: var(--blue-light); color: var(--blue); }
   .ps-done     { background: var(--surface2); color: var(--text-faint); }
-  .project-body { flex: 1; min-width: 0; }
-  .project-name { font-size: 13px; font-weight: 500; color: var(--text); }
-  .project-name.done { text-decoration: line-through; color: var(--text-faint); }
+  .proj-progress-bar { height: 3px; background: var(--border-light); margin: 0 14px; border-radius: 2px; overflow: hidden; }
+  .proj-progress-fill { height: 3px; background: var(--accent2); border-radius: 2px; transition: width 0.3s; }
+  .project-body { display: none; border-top: 1px solid var(--border-light); }
+  .project-item.open .project-body { display: block; }
+  .proj-inner-tabs { display: flex; border-bottom: 1px solid var(--border-light); padding: 0 14px; }
+  .proj-inner-tab {
+    padding: 7px 14px;
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--text-faint);
+    cursor: pointer;
+    border-bottom: 2px solid transparent;
+    margin-bottom: -1px;
+    transition: all 0.15s;
+  }
+  .proj-inner-tab:hover { color: var(--text-muted); }
+  .proj-inner-tab.active { color: var(--text); border-bottom-color: var(--accent); }
+  .proj-inner-tab .rdot { display: inline-block; width: 5px; height: 5px; border-radius: 50%; background: var(--amber); margin-left: 5px; vertical-align: 2px; }
+  .proj-tab-pane { display: none; padding: 14px; }
+  .proj-tab-pane.active { display: block; }
+  .proj-field-label { font-size: 10px; font-weight: 500; text-transform: uppercase; letter-spacing: 0.07em; color: var(--text-faint); margin-bottom: 6px; }
+  .proj-textarea {
+    width: 100%;
+    background: var(--surface2);
+    border: 1px solid var(--border-light);
+    border-radius: var(--radius);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 13px;
+    color: var(--text);
+    padding: 8px 10px;
+    resize: vertical;
+    outline: none;
+    line-height: 1.6;
+  }
+  .proj-textarea:focus { border-color: var(--border); }
+  .proj-overview { min-height: 70px; }
+  .proj-research { min-height: 130px; line-height: 1.7; }
+  .proj-step-list { display: flex; flex-direction: column; gap: 4px; margin-bottom: 8px; }
+  .proj-step {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 8px;
+    border-radius: var(--radius);
+    background: var(--surface2);
+  }
+  .proj-step.current { background: var(--amber-light); border: 1px solid rgba(196,123,43,0.3); }
+  .proj-step.completed { opacity: 0.5; }
+  .proj-step input[type=checkbox] { width: 14px; height: 14px; accent-color: var(--accent2); cursor: pointer; flex-shrink: 0; }
+  .proj-step-label { flex: 1; font-size: 12px; color: var(--text); }
+  .proj-step-label.done { text-decoration: line-through; color: var(--text-faint); }
+  .proj-step-here { font-size: 10px; font-weight: 500; color: var(--amber); white-space: nowrap; }
+  .proj-step-del { background: none; border: none; cursor: pointer; color: var(--text-faint); font-size: 14px; padding: 0 2px; line-height: 1; transition: color 0.15s; }
+  .proj-step-del:hover { color: var(--danger); }
+  .proj-add-step { display: flex; gap: 6px; margin-top: 4px; }
+  .proj-add-step input {
+    flex: 1; height: 29px;
+    background: var(--surface2);
+    border: 1px solid var(--border-light);
+    border-radius: var(--radius);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 12px; color: var(--text);
+    padding: 0 8px; outline: none;
+  }
+  .proj-add-step input:focus { border-color: var(--border); }
+  .proj-add-step button {
+    height: 29px; padding: 0 10px;
+    background: transparent;
+    border: 1px solid var(--border-light);
+    border-radius: var(--radius);
+    font-size: 12px; color: var(--text-muted);
+    cursor: pointer; font-family: 'DM Sans', sans-serif;
+    transition: background 0.15s;
+  }
+  .proj-add-step button:hover { background: var(--surface2); }
+  .proj-footer-row {
+    display: flex; align-items: center;
+    justify-content: space-between;
+    margin-top: 12px; padding-top: 10px;
+    border-top: 1px solid var(--border-light);
+  }
+  .proj-due-row { display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--text-muted); }
+  .proj-due-row input {
+    height: 27px;
+    background: var(--surface2);
+    border: 1px solid var(--border-light);
+    border-radius: var(--radius);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 12px; color: var(--text);
+    padding: 0 8px; outline: none;
+  }
+  .proj-status-sel {
+    height: 27px;
+    background: transparent;
+    border: 1px solid var(--border-light);
+    border-radius: var(--radius);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 12px; color: var(--text-muted);
+    padding: 0 6px; outline: none; cursor: pointer;
+  }
   .project-notes { font-size: 11px; color: var(--text-muted); margin-top: 2px; line-height: 1.4; }
 
   /* BUSY WORK ITEMS */
@@ -1077,7 +1187,15 @@ async function loadFromCloud() {
       if (Array.isArray(saved.dumps))     state.dumps     = saved.dumps;
       if (Array.isArray(saved.notes))     state.notes     = saved.notes;
       if (Array.isArray(saved.busy))      state.busy      = saved.busy;
-      if (Array.isArray(saved.projects))  state.projects  = saved.projects;
+      if (Array.isArray(saved.projects)) {
+      state.projects = saved.projects.map(p => ({
+        ...p,
+        steps: Array.isArray(p.steps) ? p.steps : [],
+        desc: p.desc || '',
+        research: p.research || '',
+        due: p.due || ''
+      }));
+    }
       if (typeof saved.focus === 'string') state.focus    = saved.focus;
       if (saved.recurring && typeof saved.recurring === 'object') {
         ['daily','weekly','biweekly','monthly'].forEach(f => {
@@ -1105,7 +1223,15 @@ function loadFromLocal() {
     if (Array.isArray(saved.dumps))     state.dumps     = saved.dumps;
     if (Array.isArray(saved.notes))     state.notes     = saved.notes;
     if (Array.isArray(saved.busy))      state.busy      = saved.busy;
-    if (Array.isArray(saved.projects))  state.projects  = saved.projects;
+    if (Array.isArray(saved.projects)) {
+      state.projects = saved.projects.map(p => ({
+        ...p,
+        steps: Array.isArray(p.steps) ? p.steps : [],
+        desc: p.desc || '',
+        research: p.research || '',
+        due: p.due || ''
+      }));
+    }
     if (typeof saved.focus === 'string') state.focus    = saved.focus;
     if (saved.recurring && typeof saved.recurring === 'object') {
       ['daily','weekly','biweekly','monthly'].forEach(f => {
@@ -1459,29 +1585,86 @@ function renderBusy() {
     </div>`).join('');
 }
 
-// ── PROJECTS ───────────────────────────────────────────────────────────────
+// ── PROJECTS ─────────────────────────────────────────────────────────────────
+let projOpenTabs = {};
+
 function addProject() {
   const inp = document.getElementById('project-input');
   const status = document.getElementById('project-status').value;
   if (!inp.value.trim()) return;
-  state.projects.push({ name: inp.value.trim(), status, notes: '', id: Date.now() });
+  state.projects.push({ name: inp.value.trim(), status, desc: '', research: '', steps: [], due: '', id: Date.now() });
   inp.value = '';
   save(); renderProjects();
 }
 function deleteProject(id) {
   state.projects = state.projects.filter(x => x.id !== id);
+  delete projOpenTabs[id];
   save(); renderProjects();
 }
 function updateProjectStatus(id, val) {
   const p = state.projects.find(x => x.id === id);
-  if (p) { p.status = val; save(); renderProjects(); }
+  if (p) { p.status = val; save(); renderProjects(); setTimeout(()=>reopenCard(id), 10); }
 }
-function updateProjectNotes(id, val) {
+function updateProjectDesc(id, val) {
   const p = state.projects.find(x => x.id === id);
-  if (p) { p.notes = val; save(); }
+  if (p) { p.desc = val; save(); }
 }
+function updateProjectResearch(id, val) {
+  const p = state.projects.find(x => x.id === id);
+  if (p) { p.research = val; save(); }
+}
+function updateProjectDue(id, val) {
+  const p = state.projects.find(x => x.id === id);
+  if (p) { p.due = val; save(); }
+}
+function addProjectStep(id) {
+  const inp = document.getElementById('stepinp-' + id);
+  if (!inp || !inp.value.trim()) return;
+  const p = state.projects.find(x => x.id === id);
+  if (!p) return;
+  if (!Array.isArray(p.steps)) p.steps = [];
+  p.steps.push({ text: inp.value.trim(), done: false });
+  inp.value = '';
+  save(); renderProjects(); setTimeout(()=>reopenCard(id), 10);
+}
+function toggleProjectStep(id, si) {
+  const p = state.projects.find(x => x.id === id);
+  if (p && p.steps && p.steps[si] !== undefined) {
+    p.steps[si].done = !p.steps[si].done;
+    save(); renderProjects(); setTimeout(()=>reopenCard(id), 10);
+  }
+}
+function deleteProjectStep(id, si) {
+  const p = state.projects.find(x => x.id === id);
+  if (p && p.steps) { p.steps.splice(si, 1); save(); renderProjects(); setTimeout(()=>reopenCard(id), 10); }
+}
+function toggleProjectCard(id) {
+  const el = document.getElementById('pcard-' + id);
+  if (!el) return;
+  el.classList.toggle('open');
+}
+function switchProjTab(id, tab) {
+  projOpenTabs[id] = tab;
+  renderProjects();
+  setTimeout(()=>reopenCard(id), 10);
+}
+function reopenCard(id) {
+  const el = document.getElementById('pcard-' + id);
+  if (el) el.classList.add('open');
+}
+
 const statusLabels = { working:'Working on', active:'Active', waiting:'Waiting', stalled:'Stalled', done:'Done' };
 const statusCls    = { working:'ps-working', active:'ps-active', waiting:'ps-waiting', stalled:'ps-stalled', done:'ps-done' };
+
+function getProjectProgress(steps) {
+  if (!steps || !steps.length) return null;
+  return Math.round(steps.filter(s=>s.done).length / steps.length * 100);
+}
+function getCurrentStep(steps) {
+  if (!steps) return -1;
+  return steps.findIndex(s => !s.done);
+}
+
 function renderProjects() {
   const el = document.getElementById('projects-list');
   const order = { working:0, active:1, waiting:2, stalled:3, done:4 };
@@ -1492,26 +1675,66 @@ function renderProjects() {
   });
   document.getElementById('projects-count').textContent = state.projects.length + ' project' + (state.projects.length !== 1 ? 's' : '');
   if (!sorted.length) { el.innerHTML = '<p class="empty-state">No projects added yet</p>'; return; }
+
   el.innerHTML = sorted.map(p => {
-    const name   = p.name || p.text || 'Unnamed project';
-    const status = p.status || 'active';
-    const notes  = p.notes || '';
-    const id     = p.id;
+    const name     = p.name || p.text || 'Unnamed project';
+    const status   = p.status || 'active';
+    const steps    = Array.isArray(p.steps) ? p.steps : [];
+    const pct      = getProjectProgress(steps);
+    const curStep  = getCurrentStep(steps);
+    const activeTab = projOpenTabs[p.id] || 'plan';
+    const hasResearch = (p.research || '').trim().length > 0;
     const isWorking = status === 'working';
-    return `
-    <div class="project-item" style="${isWorking ? 'border:1px solid #E8C97A;' : ''}">
-      <div class="project-body">
-        <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px">
-          <span class="project-name ${status==='done'?'done':''}">${esc(name)}</span>
-          <select onchange="updateProjectStatus(${id},this.value)" style="font-size:11px;border:1px solid var(--border-light);border-radius:6px;background:var(--surface);color:var(--text-muted);padding:1px 4px;font-family:'DM Sans',sans-serif">
-            ${Object.entries(statusLabels).map(([v,l])=>`<option value="${v}" ${status===v?'selected':''}>${l}</option>`).join('')}
-          </select>
-        </div>
-        <input type="text" value="${esc(notes)}" placeholder="Add a note…" onchange="updateProjectNotes(${id},this.value)"
-          style="width:100%;font-size:11px;background:transparent;border:none;border-bottom:1px solid var(--border-light);color:var(--text-muted);font-family:'DM Sans',sans-serif;padding:2px 0;outline:none" />
+
+    const stepsHtml = steps.map((s, si) => {
+      const isCurrent = si === curStep;
+      return \`<div class="proj-step \${s.done ? 'completed' : ''} \${isCurrent ? 'current' : ''}">
+        <input type="checkbox" \${s.done ? 'checked' : ''} onchange="toggleProjectStep(\${p.id},\${si})">
+        <span class="proj-step-label \${s.done ? 'done' : ''}">\${esc(s.text)}</span>
+        \${isCurrent ? '<span class="proj-step-here">▶ here</span>' : ''}
+        <button class="proj-step-del" onclick="deleteProjectStep(\${p.id},\${si})" title="Remove">×</button>
+      </div>\`;
+    }).join('');
+
+    return \`<div class="project-item \${isWorking ? 'working' : ''}" id="pcard-\${p.id}">
+      <div class="project-header" onclick="toggleProjectCard(\${p.id})">
+        <span class="proj-chevron">▾</span>
+        <span class="project-name \${status==='done'?'done':''}">\${esc(name)}</span>
+        \${pct !== null ? \`<span class="proj-pct">\${pct}%</span>\` : ''}
+        <span class="project-status \${statusCls[status]||'ps-active'}">\${statusLabels[status]||status}</span>
+        \${p.due ? \`<span style="font-size:10px;color:var(--text-faint)">\${new Date(p.due+'T12:00').toLocaleDateString('en-US',{month:'short',day:'numeric'})}</span>\` : ''}
       </div>
-      <button class="btn-del" onclick="deleteProject(${id})" title="Delete">×</button>
-    </div>`;
+      \${pct !== null ? \`<div class="proj-progress-bar"><div class="proj-progress-fill" style="width:\${pct}%"></div></div>\` : ''}
+      <div class="project-body">
+        <div class="proj-inner-tabs">
+          <div class="proj-inner-tab \${activeTab==='plan'?'active':''}" onclick="switchProjTab(\${p.id},'plan')">&#9776; Plan</div>
+          <div class="proj-inner-tab \${activeTab==='research'?'active':''}" onclick="switchProjTab(\${p.id},'research')">&#128196; Research\${hasResearch ? '<span class="rdot"></span>' : ''}</div>
+        </div>
+        <div class="proj-tab-pane \${activeTab==='plan'?'active':''}" id="ptab-plan-\${p.id}">
+          <div class="proj-field-label">Overview</div>
+          <textarea class="proj-textarea proj-overview" placeholder="Describe the project, goals, outline…" oninput="updateProjectDesc(\${p.id},this.value)">\${esc(p.desc||'')}</textarea>
+          <div class="proj-field-label" style="margin-top:12px">Steps — <span style="color:var(--amber)">highlighted = where you left off</span></div>
+          <div class="proj-step-list">\${stepsHtml || '<p class="empty-state" style="font-size:12px">No steps yet</p>'}</div>
+          <div class="proj-add-step">
+            <input type="text" id="stepinp-\${p.id}" placeholder="Add a step…" onkeydown="if(event.key==='Enter')addProjectStep(\${p.id})">
+            <button onclick="addProjectStep(\${p.id})">+ Add</button>
+          </div>
+          <div class="proj-footer-row">
+            <div class="proj-due-row">
+              <span style="font-size:11px">Due</span>
+              <input type="date" value="\${p.due||''}" onchange="updateProjectDue(\${p.id},this.value)">
+            </div>
+            <select class="proj-status-sel" onchange="updateProjectStatus(\${p.id},this.value)">
+              \${Object.entries(statusLabels).map(([v,l])=>\`<option value="\${v}" \${status===v?'selected':''}>\${l}</option>\`).join('')}
+            </select>
+          </div>
+        </div>
+        <div class="proj-tab-pane \${activeTab==='research'?'active':''}" id="ptab-research-\${p.id}">
+          <p style="font-size:11px;color:var(--text-faint);margin-bottom:8px;line-height:1.5">Dump everything here — links, how things connect, info gathered, notes from calls, vendor specs, anything you've looked up.</p>
+          <textarea class="proj-textarea proj-research" placeholder="Start typing your research…" oninput="updateProjectResearch(\${p.id},this.value)">\${esc(p.research||'')}</textarea>
+        </div>
+      </div>
+    </div>\`;
   }).join('');
   renderWorkingBar();
 }
@@ -1520,16 +1743,10 @@ function renderWorkingBar() {
   const working = state.projects.filter(p => (p.status || 'active') === 'working');
   const bar = document.getElementById('working-bar');
   const chips = document.getElementById('working-chips');
-  if (!working.length) {
-    bar.classList.remove('has-items');
-    chips.innerHTML = '';
-    return;
-  }
+  if (!bar) return;
+  if (!working.length) { bar.classList.remove('has-items'); chips.innerHTML = ''; return; }
   bar.classList.add('has-items');
-  chips.innerHTML = working.map(p => `
-    <div class="working-chip">
-      ⚡ ${esc(p.name || p.text || 'Project')}
-    </div>`).join('');
+  chips.innerHTML = working.map(p => \`<div class="working-chip">⚡ \${esc(p.name || p.text || 'Project')}</div>\`).join('');
 }
 
 // ── UTILS ──────────────────────────────────────────────────────────────────
